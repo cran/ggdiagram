@@ -141,6 +141,11 @@ pt_props <- list(
 #' @param style Gets and sets the styles associated with points
 #' @slot tibble Gets a [`tibble::tibble`] containing parameters and styles used by [`ggplot2::geom_point`].
 #' @slot xy Gets a 2-column matrix of the x and y coordinates of the ob_point object.
+#' @slot centroid ob_point at the average of the x and y values
+#' @slot bounding_box ob_rectangle that contains all the points in the object
+#' @slot place function to place point in relation to other objects
+#' @slot label function to create ob_label for points in the object
+#' @slot aesthetics returns class_aesthetics for ob_point
 #' @inherit ob_style params
 #' @export
 #' @returns ob_point object
@@ -154,6 +159,7 @@ pt_props <- list(
 #'   ggplot2::theme_minimal()
 ob_point <- S7::new_class(
   name = "ob_point",
+  package = "ggdiagram",
   parent = xy,
   properties = rlang::list2(
     !!!pt_props$primary,
@@ -235,6 +241,7 @@ ob_point <- S7::new_class(
 ob_polar <- S7::new_class(
   name = "ob_polar",
   parent = ob_point,
+  package = "ggdiagram",
   constructor = function(theta = S7::class_missing,
                          r = numeric(0),
                          alpha = numeric(0),

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.32">
+<meta name="generator" content="quarto-1.8.24">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -60,7 +60,146 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<style type="text/css">body {background-color: #fff;margin: 1em auto;max-width: 700px;overflow: visible;padding-left: 2em;padding-right: 2em;font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;font-size: 14px;line-height: 1.35;}table {margin: 1em auto;border-width: 1px;border-color: #DDDDDD;border-style: outset;border-collapse: collapse;}table th {border-width: 2px;padding: 5px;border-style: inset;}table td {border-width: 1px;border-style: inset;line-height: 18px;padding: 5px 5px;}table, table th, table td {border-left-style: none;border-right-style: none;}table thead, table tr.even {background-color: #f7f7f7;}p {margin: 0.5em 0;}blockquote {background-color: #f6f6f6;padding: 0.25em 0.75em;}hr {border-style: solid;border: none;border-top: 1px solid #777;margin: 28px 0;}dl {margin-left: 0;}dl dd {margin-bottom: 13px;margin-left: 13px;}dl dt {font-weight: bold;}ul {margin-top: 0;}ul li {list-style: circle outside;}ul ul {margin-bottom: 0;}pre, code {background-color: #f7f7f7;border-radius: 3px;color: #333;white-space: pre-wrap; }pre {border-radius: 3px;margin: 5px 0px 10px 0px;padding: 10px;}pre:not([class]) {background-color: #f7f7f7;}code {font-family: Consolas, Monaco, 'Courier New', monospace;font-size: 85%;}p > code, li > code {padding: 2px 0px;}div.figure {text-align: center;}img {background-color: #FFFFFF;padding: 2px;border: 1px solid #DDDDDD;border-radius: 3px;border: 1px solid #CCCCCC;margin: 0 5px;}h1 {margin-top: 0;font-size: 35px;line-height: 40px;}h2 {border-bottom: 4px solid #f7f7f7;padding-top: 10px;padding-bottom: 2px;font-size: 145%;}h3 {border-bottom: 2px solid #f7f7f7;padding-top: 10px;font-size: 120%;}h4 {border-bottom: 1px solid #f7f7f7;margin-left: 8px;font-size: 105%;}h5, h6 {border-bottom: 1px solid #ccc;font-size: 105%;}a {color: #0033dd;text-decoration: none;}a:hover {color: #6666ff; }a:visited {color: #800080; }a:visited:hover {color: #BB00BB; }a[href^="http:"] {text-decoration: underline; }a[href^="https:"] {text-decoration: underline; }</style>
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+</style>
 </head>
 
 <body>
@@ -102,7 +241,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ob_circle</span>(<span class="at">radius =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ob_rectangle</span>(<span class="at">width =</span> <span class="dv">2</span>, </span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">height =</span> <span class="dv">2</span>) <span class="sc">+</span> </span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_equal</span>() <span class="sc">+</span> </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>() <span class="sc">+</span> </span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>()</span></code></pre></div>
 <div class="cell-output-display">
 <div id="fig-ob" class="quarto-float quarto-figure quarto-figure-center">
@@ -338,7 +477,7 @@ Figure 8
 <li>Turns using the <code>turn</code> function (e.g., <code>turn(1/5)</code>)</li>
 </ul>
 <h1 id="object-arrays-with-ob_array">Object Arrays with <code>ob_array</code></h1>
-<p>Sometimes it is useful to make arrays of objects. The <code>ob_array</code> function makes <code>k</code> copies of an object,arranges them in a line in a specified direction, and separates the objects by a specified amount. By default, the array is arranged horizontally, centered on the original object, separated by 1 unit. Here we make an array of 5 circles.</p>
+<p>Sometimes it is useful to make arrays of objects. The <code>ob_array</code> function makes <code>k</code> copies of an object, arranges them in a line in a specified direction, and separates the objects by a specified amount. By default, the array is arranged horizontally, centered on the original object, separated by 1 unit. Here we make an array of 5 circles.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggdiagram</span>(<span class="at">font_size =</span> <span class="dv">18</span>) <span class="sc">+</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ob_circle</span>() <span class="sc">|&gt;</span></span>
@@ -422,7 +561,7 @@ Figure 10: A latent variable with 3 observed indicators
 </div>
 </div>
 <h1 id="changing-the-default-arrowhead">Changing the default arrowhead</h1>
-<p>Functions that can make arrows (e.g., <code>connect</code>, <code>ob_segment</code>, <code>ob_arc</code>, <code>ob_path</code>, <code>ob_bezier</code>) use functions from the <code>ggarrow</code> package. The arrowheads are <a href="https://teunbrand.github.io/ggarrow/articles/customisation.html">fully customizable</a>. The <a href="https://wjschne.github.io/arrowheadr/">arrowheadr</a> package has functions for many custom arrowheads and for creating new arrowheads.</p>
+<p>Functions that can make arrows (e.g., <code>connect</code>, <code>ob_segment</code>, <code>ob_arc</code>, <code>ob_path</code>, <code>ob_bezier</code>) use functions from the <a href="https://teunbrand.github.io/ggarrow/">ggarrow</a> package. The arrowheads are <a href="https://teunbrand.github.io/ggarrow/articles/customisation.html">fully customizable</a>. The <a href="https://wjschne.github.io/arrowheadr/">arrowheadr</a> package has functions for many custom arrowheads and for creating new arrowheads.</p>
 <p>The <code>arrowhead</code> function returns a matrix that draws the default arrowhead.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">arrowhead</span>()</span>
@@ -464,6 +603,21 @@ Figure 10: A latent variable with 3 observed indicators
 </figure>
 </div>
 </div>
+</div>
+<p>The original default can be restored like so:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set_default_arrowhead</span>()</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">arrowhead</span>()</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ── &lt;class_arrowhead&gt;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; A matrix with 2 columns and 200 rows. First 6 rows:</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          x    y</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,] -0.39 0.00</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,] -0.39 0.02</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,] -0.39 0.04</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [4,] -0.40 0.06</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [5,] -0.40 0.08</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [6,] -0.40 0.10</span></span></code></pre></div>
 </div>
 
 

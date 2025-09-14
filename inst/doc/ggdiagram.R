@@ -21,7 +21,7 @@ ggplot() +
   ob_circle(radius = 1) +
   ob_rectangle(width = 2, 
                height = 2) + 
-  coord_equal() + 
+  coord_fixed() + 
   theme_void()
 
 
@@ -227,4 +227,9 @@ ggdiagram() +
   x +
   y +
   connect(x, y, resect = 2)
+
+
+## -----------------------------------------------------------------------------
+set_default_arrowhead()
+arrowhead()
 
