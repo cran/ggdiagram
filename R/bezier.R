@@ -1,5 +1,3 @@
-
-
 bz_styles <- c(
   "alpha",
   "arrow_head",
@@ -24,15 +22,10 @@ bz_styles <- c(
 )
 
 
-
 bz_props <- list(
   # primary ----
   primary = list(
-    p = S7::new_property(class = point_or_list, validator = function(value) {
-      if (inherits(value, "list")) {
-        allsameclass(value, "ob_point")
-      }
-    })
+    p = path_props$primary$p
   ),
   extra = list(
     label = label_or_character_or_angle,
@@ -42,24 +35,23 @@ bz_props <- list(
   # derived ----
   derived = list(
     bounding_box = S7::new_property(getter = function(self) {
-
       d_rect <- get_tibble(self) |>
         tidyr::unnest(p_unnest) |>
-        dplyr::summarise(xmin = min(x),
-                         xmax = max(x),
-                         ymin = min(y),
-                         ymax = max(y))
+        dplyr::summarise(
+          xmin = min(x),
+          xmax = max(x),
+          ymin = min(y),
+          ymax = max(y)
+        )
 
-      ob_rectangle(southwest = ob_point(d_rect$xmin, d_rect$ymin),
-                northeast = ob_point(d_rect$xmax, d_rect$ymax))
-
+      ob_rectangle(
+        southwest = ob_point(d_rect$xmin, d_rect$ymin),
+        northeast = ob_point(d_rect$xmax, d_rect$ymax)
+      )
     }),
     length = S7::new_property(
       getter = function(self) {
-        if (inherits(self@p, "list")) {
-          l <- length(self@p)
-        } else l <- 1
-        l
+        length(self@p)
       }
     ),
     path = S7::new_property(getter = function(self) {
@@ -67,14 +59,10 @@ bz_props <- list(
         dplyr::rename(p = p_unnest) |>
         dplyr::mutate(p = purrr::map(p, ob_point)) |>
         data2shape(ob_path)
-
     }),
     style = S7::new_property(
       getter = function(self) {
-        pr <- purrr::map(bz_styles,
-                         prop,
-                         object = self
-        ) |>
+        pr <- purrr::map(bz_styles, prop, object = self) |>
           `names<-`(bz_styles)
         rlang::inject(ob_style(!!!get_non_empty_list(pr)))
       },
@@ -88,7 +76,6 @@ bz_props <- list(
     ),
     tibble = S7::new_property(getter = function(self) {
       p <- self@p
-      if (S7::S7_inherits(self@p, ob_point)) p <- list(p)
       d <- list(
         p = p,
         group = seq(1, self@length),
@@ -115,7 +102,6 @@ bz_props <- list(
         id = self@id
       )
       get_non_empty_tibble(d)
-
     })
   ),
   # functions ----
@@ -128,50 +114,229 @@ bz_props <- list(
     midpoint = S7::new_property(S7::class_function, getter = function(self) {
       \(position = .5, ...) {
         midpoint(self, position = position, ...)
+      }
+    }),
+    point_at_x = S7::new_property(
+      S7::class_function,
+      getter = function(self) {
+        \(x = 0, ...) {
+          xx <- x
+          first_pass <- get_tibble(self) |>
+            dplyr::left_join(self@tibble |> dplyr::select(group, n, p),
+                      by = dplyr::join_by(group)) |>
+            dplyr::mutate(t = purrr::map(n, \(nn) {
+              seq(0,1, length.out = nn)
+            })) |>
+            tidyr::unnest(c(p_unnest, t)) |>
+            dplyr::mutate(x1 = dplyr::lead(x),
+                          t1 = dplyr::lead(t),
+                          rowid = dplyr::row_number(),
+                          .by = group) |>
+            dplyr::filter(!is.na(x1)) |>
+            dplyr::filter(((x <= xx) & (x1 > xx)) | ((x > xx) & (x1 <= xx)) | ((x == xx) & ((rowid == 1) | (rowid == n - 1))))
+
+          if (nrow(first_pass) == 0) {
+            return(NULL)
+          }
+
+          second_pass <- first_pass |>
+            dplyr::mutate(group1 = dplyr::row_number(),
+                          .by = group) |>
+            dplyr::mutate(my_point = purrr::pmap(list(p = p,
+                                                      t = t,
+                                                      t1 = t1,
+                                                      n = n,
+                                                      rowid = rowid),
+                                                 \(p,t,t1, n, rowid) {
+                                     bezier::bezier(seq(t, t1, length.out = 100), p = p@xy) |>
+                                       `colnames<-`(c("x", "y")) |>
+                                       tibble::as_tibble() |>
+                                       dplyr::mutate(x1 = dplyr::lead(x)) |>
+                                       dplyr::filter(!is.na(x1)) |>
+                                       dplyr::filter(((x <= xx) & (x1 > xx)) | ((x > xx) & (x1 <= xx)) | ((x == xx) & ((rowid == 1) | (rowid == n - 1)))) |>
+                                       dplyr::select(-x1)
+
+                                   })) |>
+            dplyr::select(-x, -y) |>
+            tidyr::unnest(my_point) |>
+            dplyr::select(group, x, y) |>
+            tidyr::nest(.by = group) |>
+            dplyr::mutate(p = purrr::map(data, ggdiagram::data2shape, shape = ob_point)) |>
+            dplyr::mutate(n = purrr::map_int(data, nrow))
+
+          if (all(second_pass$n == 1)) {
+            bind(second_pass$p)
+          } else {
+            second_pass$p
+          }
         }
-    })
+      }
+    ),
+    point_at_y = S7::new_property(
+      S7::class_function,
+      getter = function(self) {
+        \(y = 0, ...) {
+          yy <- y
+          first_pass <- get_tibble(self) |>
+            dplyr::left_join(self@tibble |> dplyr::select(group, n, p),
+                             by = dplyr::join_by(group)) |>
+            dplyr::mutate(t = purrr::map(n, \(nn) {
+              seq(0,1, length.out = nn)
+            })) |>
+            tidyr::unnest(c(p_unnest, t)) |>
+            dplyr::mutate(y1 = dplyr::lead(y),
+                          t1 = dplyr::lead(t),
+                          rowid = dplyr::row_number(),
+                          .by = group) |>
+            dplyr::filter(!is.na(y1)) |>
+            dplyr::filter(((y <= yy) & (y1 > yy)) | ((y > yy) & (y1 <= yy)) | ((y == yy) & (rowid == 1)) | ((y1 == yy) & (rowid == n - 1)))
+
+          if (nrow(first_pass) == 0) {
+            return(NULL)
+          }
+
+          second_pass <- first_pass |>
+            dplyr::mutate(group1 = dplyr::row_number(),
+                          .by = group) |>
+            dplyr::mutate(my_point = purrr::pmap(list(p = p,
+                                                      t = t,
+                                                      t1 = t1,
+                                                      n = n,
+                                                      rowid = rowid),
+                                                 \(p,t,t1, n, rowid) {
+                                                   bezier::bezier(seq(t, t1, length.out = 100), p = p@xy) |>
+                                                     `colnames<-`(c("x", "y")) |>
+                                                     tibble::as_tibble() |>
+                                                     dplyr::mutate(y1 = dplyr::lead(y)) |>
+                                                     dplyr::filter(!is.na(y1)) |>
+                                                     dplyr::filter(((y <= yy) & (y1 > yy)) | ((y > yy) & (y1 <= yy)) | ((y == yy) & (rowid == 1)) | ((y1 == yy) & (rowid == n - 1))) |>
+                                                     dplyr::select(-y1)
+
+                                                 })) |>
+            dplyr::select(-x, -y) |>
+            tidyr::unnest(my_point) |>
+            dplyr::select(group, x, y) |>
+            tidyr::nest(.by = group) |>
+            dplyr::mutate(p = purrr::map(data, ggdiagram::data2shape, shape = ob_point)) |>
+            dplyr::mutate(n = purrr::map_int(data, nrow))
+
+          if (all(second_pass$n == 1)) {
+            bind(second_pass$p)
+          } else {
+            second_pass$p
+          }
+        }
+      }
+    ),
+    set_label_x = S7::new_property(
+      S7::class_function,
+      getter = function(self) {
+        \(position = NULL, x = NULL) {
+          if (!S7::S7_inherits(self@label, ob_label)) {
+            stop("The ob_segment does not have a label.")
+          }
+          if (is.null(x)) {
+            if (is.null(position)) {
+              position <- .5
+            }
+            x <- self[1]@midpoint(position)@x
+          }
+          lc <- map2_ob(self, x, \(s, xx) {
+            pp <- s@point_at_x(xx)
+            if (is.null(pp)) {
+              pp <- ob_point(NA_real_, NA_real_)
+            } else {
+              pp <- bind(pp)
+            }
+            pp[1]
+          })
+
+          self@label_sloped = FALSE
+          self@label@position = NA_real_
+          self@label@center <- lc
+          self
+        }
+      }
+    ),
+    set_label_y = S7::new_property(
+      S7::class_function,
+      getter = function(self) {
+        \(position = NULL, y = NULL) {
+          if (!S7::S7_inherits(self@label, ob_label)) {
+            stop("The ob_segment does not have a label.")
+          }
+          if (is.null(y)) {
+            if (is.null(position)) {
+              position <- .5
+            }
+              y <- self[1]@midpoint(position)@y
+          }
+
+          lc <- map2_ob(self, y, \(s, yy) {
+            pp <- s@point_at_y(yy)
+            if (is.null(pp)) {
+              pp <- ob_point(NA_real_, NA_real_)
+            } else {
+              pp <- bind(pp)
+            }
+            pp[1]
+          })
+
+          self@label_sloped = FALSE
+          self@label@position = NA_real_
+          self@label@center <- lc
+
+          self
+        }
+      }
+    )
   ),
   # info ----
-  info = list(aesthetics = S7::new_property(
-    getter = function(self) {
-      class_aesthetics_list(
-        geom = ggarrow::geom_arrow,
-        mappable_bare = character(0),
-        mappable_identity = c(
-          "color",
-          "linewidth",
-          "linetype",
-          "alpha"),
-        not_mappable = c(
-          "n",
-          "lineend",
-          "linejoin",
-          "arrow_head",
-          "arrow_fins",
-          "length",
-          "length_head",
-          "length_fins",
-          "length_mid",
-          "resect",
-          "resect_fins",
-          "resect_head",
-          "linemitre"
-        ),
-        required_aes = c(
-          "x",
-          "y",
-          "group"),
-        omit_names = c(
-          "linejoin",
-          "rule",
-          "label",
-          "label_sloped",
-          "id"),
-        inherit.aes = FALSE,
-        style = bz_styles
-      )
-    }
-  ))
+  info = list(
+    aesthetics = S7::new_property(
+      getter = function(self) {
+        class_aesthetics_list(
+          geom = ggarrow::geom_arrow,
+          mappable_bare = character(0),
+          mappable_identity = c(
+            "color",
+            "linewidth",
+            "linetype",
+            "alpha"
+          ),
+          not_mappable = c(
+            "n",
+            "lineend",
+            "linejoin",
+            "arrow_head",
+            "arrow_fins",
+            "length",
+            "length_head",
+            "length_fins",
+            "length_mid",
+            "resect",
+            "resect_fins",
+            "resect_head",
+            "linemitre"
+          ),
+          required_aes = c(
+            "x",
+            "y",
+            "group"
+          ),
+          omit_names = c(
+            "linejoin",
+            "rule",
+            "label",
+            "label_sloped",
+            "id"
+          ),
+          inherit.aes = FALSE,
+          style = bz_styles
+        )
+      }
+    )
+  )
 )
 
 # ob_bezier----
@@ -183,69 +348,84 @@ bz_props <- list(
 #' If you wish to specify multiple bezier curves, you must supply a list of ob_point objects. When plotted, the ob_bezier function uses the bezier::bezier function to create the point coordinates of the curve and the ggarrow::geom_arrow function to create the geom.
 #' @export
 #' @returns ob_bezier object
-#' @param p ob_point or list of ob_points
+#' @param p [`ob_point`] or list of [`ob_point`] objects
 #' @param label A character, angle, or label object
 #' @param label_sloped A logical value indicating whether the label should be sloped with the curve
-#' @slot length The number of curves in the ob_bezier object
-#' @param ... <[`dynamic-dots`][rlang::dyn-dots]>  properties passed to style
-#' @param style Gets and sets the styles associated with ob_beziers
-#' @slot tibble Gets a tibble (data.frame) containing parameters and styles used by `ggarrow::geom_arrow`.
 #' @inherit ob_style params
-#' @slot geom A function that converts the object to a geom. Any additional parameters are passed to `ggarrow::geom_arrow`.
-#' @slot midpoint A function that selects 1 or more midpoints of the ob_bezier. The `position` argument can be between 0 and 1. Additional arguments are passed to `ob_point`.
-#' @slot aesthetics A list of information about the ob_bezier's aesthetic properties
+#' @param style Gets and sets the styles associated with ob_beziers
+#' @param ... <[`dynamic-dots`][rlang::dyn-dots]>  properties passed to style
+#' @prop aesthetics A list of information about the object's aesthetic properties
+#' @prop bounding_box A rectangle that contains all the bezier curves
+#' @prop geom A function that converts the object to a geom. Any additional parameters are passed to `ggarrow::geom_arrow`.
+#' @prop length The number of curves in the ob_bezier object
+#' @prop midpoint A function that selects 1 or more midpoints of the ob_bezier. The `position` argument can be between 0 and 1. Additional arguments are passed to `ob_point`.
+#' @prop path A path object consisting of the control points
+#' @prop point_at_x A function that finds the point on each curve where x is equal to the `x` argument.
+#' @prop point_at_y A function that finds the point on each curve where y is equal to the `y` argument.
+#' @prop set_label_x A function that sets labels to have the same x coordinate. The `position` argument can be between 0 and 1, indicating how far along on the first curve the x coordinate is selected. If the `x` argument is set, the `position` argument is overridden, and the x-coordinate is set directly.
+#' @prop set_label_y A function that sets labels to have the same y coordinate. The `position` argument can be between 0 and 1, indicating how far along on the first curve the y coordinate is selected. If the `y` argument is set, the `position` argument is overridden, and the y-coordinate is set directly.
+#' @prop tibble Gets a tibble (data.frame) containing parameters and styles used by `ggarrow::geom_arrow`.
 #' @examples
-#' control_points <- ob_point(c(0,1,2,4), c(0,4,0,0))
-#' ggdiagram() +
-#'   ob_bezier(control_points, color = "blue")
+#' control_points <- ob_point(c(0,1,2,4), c(0,4,0,1))
+#' ob_bezier(control_points, color = "blue")
 ob_bezier <- S7::new_class(
   name = "ob_bezier",
   parent = has_style,
   package = "ggdiagram",
   properties = rlang::list2(
-      !!!bz_props$primary,
-      !!!bz_props$extra,
-      !!!bz_props$styles,
-      !!!bz_props$derived,
-      !!!bz_props$funs,
-      !!!bz_props$info
+    !!!bz_props$primary,
+    !!!bz_props$extra,
+    !!!bz_props$styles,
+    !!!bz_props$derived,
+    !!!bz_props$funs,
+    !!!bz_props$info
   ),
-  constructor = function(p = S7::class_missing,
-                         label = character(0),
-                         label_sloped = TRUE,
-                         n = 100,
-                         alpha = numeric(0),
-                         arrow_head = S7::class_missing,
-                         arrow_fins = S7::class_missing,
-                         arrowhead_length = numeric(0),
-                         length_head = numeric(0),
-                         length_fins = numeric(0),
-                         color = character(0),
-                         fill = character(0),
-                         lineend = numeric(0),
-                         linejoin = numeric(0),
-                         linewidth = numeric(0),
-                         linewidth_fins = numeric(0),
-                         linewidth_head = numeric(0),
-                         linetype = numeric(0),
-                         resect = numeric(0),
-                         resect_fins = numeric(0),
-                         resect_head = numeric(0),
-                         stroke_color = character(0),
-                         stroke_width = numeric(0),
-                         style = S7::class_missing,
-                         id = character(0),
-                         ...) {
+  constructor = function(
+    p = S7::class_missing,
+    label = character(0),
+    label_sloped = TRUE,
+    n = 101,
+    alpha = numeric(0),
+    arrow_head = S7::class_missing,
+    arrow_fins = S7::class_missing,
+    arrowhead_length = numeric(0),
+    length_head = numeric(0),
+    length_fins = numeric(0),
+    color = character(0),
+    fill = character(0),
+    lineend = numeric(0),
+    linejoin = numeric(0),
+    linewidth = numeric(0),
+    linewidth_fins = numeric(0),
+    linewidth_head = numeric(0),
+    linetype = numeric(0),
+    resect = numeric(0),
+    resect_fins = numeric(0),
+    resect_head = numeric(0),
+    stroke_color = character(0),
+    stroke_width = numeric(0),
+    style = S7::class_missing,
+    id = character(0),
+    ...
+  ) {
     id <- as.character(id)
 
-    if (S7::S7_inherits(p, ob_point)) p <- list(p)
-    if (missing(p)) stop("Must specify 2 or more control points.")
+    if (S7::S7_inherits(p, ob_point)) {
+      p <- list(p)
+    }
+    if (missing(p)) {
+      stop("Must specify 2 or more control points.")
+    }
     purrr::walk(p, \(pp) {
       if (!S7::S7_inherits(pp, ob_point)) {
-        stop("Each item in list p must be an ob_point object of length 2 or more.")
+        stop(
+          "Each item in list p must be an ob_point object of length 2 or more."
+        )
       }
-      if (pp@length < 1) {
-        stop("Each item in list p must be an ob_point object of length 2 or more.")
+      if (pp@length < 2) {
+        stop(
+          "Each item in list p must be an ob_point object of length 2 or more."
+        )
       }
     })
 
@@ -255,8 +435,9 @@ ob_bezier <- S7::new_class(
     }) |>
       bind()
 
-bz_style <- p_style + style +
-  ob_style(
+    bz_style <- p_style +
+      style +
+      ob_style(
         alpha = alpha,
         arrow_head = arrow_head,
         arrow_fins = arrow_fins,
@@ -278,11 +459,10 @@ bz_style <- p_style + style +
         stroke_color = stroke_color,
         stroke_width = stroke_width
       ) +
-  ob_style(...)
+      ob_style(...)
 
     non_empty_list <- get_non_empty_props(bz_style)
 
-    if (S7::S7_inherits(p, ob_point)) p <- list(p)
     d <- tibble::tibble(
       p = p
     )
@@ -290,14 +470,20 @@ bz_style <- p_style + style +
       d <- dplyr::bind_cols(d, tibble::tibble(!!!non_empty_list))
     }
 
-    if (is.character(label) || is.numeric(label) || S7::S7_inherits(label, ob_angle)) {
-      if (length(label)  > 0) {
+    if (
+      is.character(label) ||
+        is.numeric(label) ||
+        S7::S7_inherits(label, ob_angle)
+    ) {
+      if (length(label) > 0) {
         label = ob_label(label)
         label@style <- bz_style + label@style
       }
     }
 
-    if (length(label) == 0) label = character(0)
+    if (length(label) == 0) {
+      label = character(0)
+    }
     # If there is one object but many labels, make multiple objects
     if (S7::S7_inherits(label, ob_label)) {
       if (label@length > 1 & nrow(d) == 1) {
@@ -306,9 +492,9 @@ bz_style <- p_style + style +
       }
     }
 
-
-    S7::new_object(.parent = S7::S7_object(),
-      p =  d$p,
+    S7::new_object(
+      .parent = S7::S7_object(),
+      p = d$p,
       label = label,
       label_sloped = label_sloped,
       alpha = d[["alpha"]] %||% alpha,
@@ -333,46 +519,49 @@ bz_style <- p_style + style +
       stroke_width = d[["stroke_width"]] %||% stroke_width,
       id = d[["id"]] %||% id
     )
-  })
-
+  }
+)
 
 
 S7::method(str, ob_bezier) <- function(
+  object,
+  nest.lev = 0,
+  additional = TRUE,
+  omit = omit_props(object, include = c(""))
+) {
+  str_properties(
     object,
-    nest.lev = 0,
-    additional = TRUE,
-    omit = omit_props(object, include = c(""))) {
-
-  str_properties(object,
-                 omit = omit,
-                 nest.lev = nest.lev,
-                 additional = additional)
-  purrr::walk(object@p,
-              \(o) {
-                str_properties(
-                  o,
-                  omit = omit_props(
-                    o,
-                    include = c("x", "y")),
-                  nest.lev = 2,
-                  additional = TRUE)
-                })
-
-
+    omit = omit,
+    nest.lev = nest.lev,
+    additional = additional
+  )
+  purrr::walk(object@p, \(o) {
+    str_properties(
+      o,
+      omit = omit_props(
+        o,
+        include = c("x", "y")
+      ),
+      nest.lev = 2,
+      additional = TRUE
+    )
+  })
 }
 
 S7::method(get_tibble, ob_bezier) <- function(x) {
   x@tibble |>
-    dplyr::mutate(p = purrr::map(p, \(x) {
-      x@tibble |> dplyr::select(x,y) |> as.matrix()
-    })) |>
-    dplyr::mutate(p_unnest = purrr::map2(p,n, \(pp,nn) {
-      bezier::bezier(t = seq(0,1, length.out = nn),
-                     p = pp) |>
-        `colnames<-`(c("x", "y")) |>
-        tibble::as_tibble()
-
-    })) |>
+    dplyr::mutate(
+      p = purrr::map(p, \(x) {
+        x@tibble |> dplyr::select(x, y) |> as.matrix()
+      })
+    ) |>
+    dplyr::mutate(
+      p_unnest = purrr::map2(p, n, \(pp, nn) {
+        bezier::bezier(t = seq(0, 1, length.out = nn), p = pp) |>
+          `colnames<-`(c("x", "y")) |>
+          tibble::as_tibble()
+      })
+    ) |>
     # tidyr::unnest(p) |>
     dplyr::select(-n, -p)
 }
@@ -385,7 +574,10 @@ S7::method(get_tibble_defaults, ob_bezier) <- function(x) {
     arrow_fins = ggarrow::arrow_fins_minimal(90),
     color = replace_na(ggarrow::GeomArrow$default_aes$colour, "black"),
     stroke_color = replace_na(ggarrow::GeomArrow$default_aes$colour, "black"),
-    stroke_width = replace_na(ggarrow::GeomArrow$default_aes$stroke_width, 0.25),
+    stroke_width = replace_na(
+      ggarrow::GeomArrow$default_aes$stroke_width,
+      0.25
+    ),
     lineend = "butt",
     linejoin = "round",
     linewidth = replace_na(ggarrow::GeomArrow$default_aes$linewidth, .5),
@@ -394,12 +586,11 @@ S7::method(get_tibble_defaults, ob_bezier) <- function(x) {
     linetype = replace_na(ggarrow::GeomArrow$default_aes$linetype, 1),
     n = 360
   )
-  get_tibble_defaults_helper(x, sp,required_aes = c("group", "p_unnest"))
+  get_tibble_defaults_helper(x, sp, required_aes = c("group", "p_unnest"))
 }
 
 
 S7::method(as.geom, ob_bezier) <- function(x, ...) {
-
   d <- get_tibble_defaults(x)
   if ("arrowhead_length" %in% colnames(d)) {
     d <- dplyr::rename(d, length = arrowhead_length)
@@ -413,101 +604,110 @@ S7::method(as.geom, ob_bezier) <- function(x, ...) {
   gc <- make_geom_helper(
     d = d,
     user_overrides = overrides,
-    aesthetics = x@aesthetics)
+    aesthetics = x@aesthetics
+  )
 
   if (S7::S7_inherits(x@label, ob_label)) {
-
-
-
     if (all(x@label_sloped)) {
-
-      d_label <- tidyr::nest(dplyr::select(d, p_unnest, group),
-                             .by = group) |>
+      d_label <- tidyr::nest(dplyr::select(d, p_unnest, group), .by = group) |>
         dplyr::bind_cols(
-          dplyr::select(x@label@tibble, -c(x, y))) |>
+          dplyr::select(x@label@tibble, -c(x, y))
+        ) |>
         tidyr::unnest(data)
-
-      if ("size" %in% colnames(d_label)) {
-        d_label <- dplyr::mutate(d_label,
-                                 size = size / ggplot2::.pt)
-      }
-
-
-      if (!("boxcolour" %in% colnames(d_label))) {
-        d_label <- dplyr::mutate(d_label, boxcolour = NA)
-      }
-
-      if (!("label.padding" %in% colnames(d_label))) {
-        d_label <- dplyr::mutate(d_label, label.padding = unit(2, "pt"))
-      } else {
-        d_label <- dplyr::mutate(
-          d_label,
-          label.padding = purrr::map(label.padding, 1),
-          .by = group)
-      }
-
-      gl <- make_geom_helper(
-        d_label,
-        aesthetics = gtextcurve_aes,
-        user_overrides = NULL)
-
-    } else {
-      dpos <- tibble::tibble(group = unique(d$group),
-                     pos = x@label@position)
-
-      d_l <- dplyr::select(x@label@tibble, -c(x, y))
-
-
-      d_label <- tidyr::unnest(d, p_unnest) |>
-        dplyr::select(x,y,group) |>
-        dplyr::left_join(dpos, by = "group") |>
-        dplyr::mutate(x0 = dplyr::lag(x),
-                      y0 = dplyr::lag(y),
-                      .by = group) |>
-        dplyr::filter(!is.na(x0)) |>
-        dplyr::mutate(dist_xy = sqrt((x - x0) ^ 2 + (y - y0) ^ 2),
-                      p = cumsum(dist_xy) / sum(dist_xy),
-                      p0 = dplyr::lag(p, default = 0),
-                      .by = group) |>
-        dplyr::filter(p0 <= pos, pos <= p) |>
-        dplyr::filter(p0 == min(p0), .by = group) |>
-        dplyr::mutate(ppos =  (pos - p0) / (p - p0),
-                      xpos = x0 + (x - x0) * ppos,
-                      ypos = y0 + (y - y0) * ppos) |>
-        dplyr::select(group, x = xpos, y = ypos) |>
-        dplyr::bind_cols(d_l)
 
       if ("size" %in% colnames(d_label)) {
         d_label <- dplyr::mutate(d_label, size = size / ggplot2::.pt)
       }
 
+      if (!("boxcolour" %in% colnames(d_label))) {
+        d_label <- dplyr::mutate(d_label, boxcolour = NA)
+      }
+
+      if ("label.padding" %in% colnames(d_label)) {
+        d_label <- dplyr::mutate(
+          d_label,
+          label.padding = purrr::map(label.padding, 1),
+          .by = group
+        )
+      }
+
+      gl <- make_geom_helper(
+        d_label,
+        aesthetics = gtextcurve_aes,
+        user_overrides = NULL
+      )
+    } else {
+
+      dpos <- tibble::tibble(group = unique(d$group), pos = x@label@position)
+
+
+
+      if (is.na(x@label@position)) {
+        d_label <- x@label@tibble
+      } else {
+        d_l <- dplyr::select(x@label@tibble, -c(x, y))
+
+        d_label <- tidyr::unnest(d, p_unnest) |>
+          dplyr::select(x, y, group) |>
+          dplyr::left_join(dpos, by = "group") |>
+          dplyr::mutate(x0 = dplyr::lag(x), y0 = dplyr::lag(y), .by = group) |>
+          dplyr::filter(!is.na(x0)) |>
+          dplyr::mutate(
+            dist_xy = sqrt((x - x0)^2 + (y - y0)^2),
+            p = cumsum(dist_xy) / sum(dist_xy),
+            p0 = dplyr::lag(p, default = 0),
+            .by = group
+          ) |>
+          dplyr::filter(p0 <= pos, pos <= p) |>
+          dplyr::filter(p0 == min(p0), .by = group) |>
+          dplyr::mutate(
+            ppos = (pos - p0) / (p - p0),
+            xpos = x0 + (x - x0) * ppos,
+            ypos = y0 + (y - y0) * ppos
+          ) |>
+          dplyr::select(group, x = xpos, y = ypos) |>
+          dplyr::bind_cols(d_l)
+
+      }
+
+      if ("size" %in% colnames(d_label)) {
+        d_label <- dplyr::mutate(d_label, size = size / ggplot2::.pt)
+      }
 
       gl <- make_geom_helper(
         d = d_label,
         aesthetics = x@label@aesthetics,
-        user_overrides = NULL)
-
+        user_overrides = NULL
+      )
     }
 
-
-
     gc <- list(gc, gl)
-
   }
   gc
 }
 
 S7::method(`[`, ob_bezier) <- function(x, i) {
   i <- character_index(i, x@id)
-  z <- data2shape(x@tibble[i,], ob_bezier)
+  z <- data2shape(x@tibble[i, ], ob_bezier)
   z@label <- na2zero(x@label[i])
   z
 }
 
-S7::method(midpoint, list(ob_bezier, S7::class_missing)) <- function(x,y, position = .5, ...) {
-  purrr::map(x@p, \(xx) {
-    ob_point(bezier::bezier(t = position, p = xx@xy), ...)
-    }) |>
+S7::method(midpoint, list(ob_bezier, S7::class_missing)) <- function(
+  x,
+  y,
+  position = .5,
+  ...
+) {
+  purrr::map2(x@p, position, \(xx, pos) {
+    if (pos < 0 || pos > 1) {
+      ob_point(NA_real_, NA_real_, ...)
+    } else {
+      ob_point(bezier::bezier(t = pos, p = xx@xy), ...)
+    }
+
+  }) |>
     bind()
 }
+
 

@@ -1,4 +1,5 @@
-do_nothing <- function(x) { # nocov start
+do_nothing <- function(x) {
+  # nocov start
   # Helps devtools:check find packages
   if (FALSE) {
     p1 <- ggforce::geom_circle()
@@ -7,7 +8,8 @@ do_nothing <- function(x) { # nocov start
     p4 <- bezier::bezier(t = .5, p = c(0, 0, 1, 1))
     p5 <- tinter::tinter("red")
   }
-} # nocov end
+  # nocov end
+}
 
 #' @export
 #' @importFrom S7 prop
@@ -25,7 +27,6 @@ S7::props
 the <- new.env(parent = emptyenv())
 
 
-
 #' @keywords internal
 #' @noRd
 character_index <- function(i, id) {
@@ -33,7 +34,9 @@ character_index <- function(i, id) {
     i <- vctrs::vec_locate_matches(i, id)$haystack |>
       stats::na.omit() |>
       unclass()
-    if (length(i) == 0) stop("There are no objects with an id equal to the value specified.")
+    if (length(i) == 0) {
+      stop("There are no objects with an id equal to the value specified.")
+    }
   }
   i
 }
@@ -65,7 +68,8 @@ class_aesthetics_list <- S7::new_class(
     required_aes = S7::class_character,
     omit_names = S7::class_character,
     inherit.aes = S7::class_logical
-  ))
+  )
+)
 
 ## class_gg ----
 class_gg <- S7::new_S3_class("gg")
@@ -81,56 +85,66 @@ class_unit <- S7::new_S3_class(
     }
   },
   validator = function(self) {
-    if (!is.numeric(self))
+    if (!is.numeric(self)) {
       stop("Underlying data for units must be numeric.")
+    }
   }
 )
 
 ## class_margin ----
+#' Create a structure for label margins and label padding
+#' @keywords internal
+#' @param x A vector of numeric data, grid
 class_margin <- S7::new_class(
   name = "class_margin",
   package = "ggdiagram",
   parent = S7::class_list,
   constructor = function(x = numeric(0), units = "pt") {
-
-    if (S7::S7_inherits(x, class_margin))
+    if (S7::S7_inherits(x, class_margin)) {
       return(x)
+    }
     if (length(x) > 0) {
       if (is.numeric(x) && !grid::is.unit(x)) {
         x <- grid::unit(x, units = units)
       }
       if (is.list(x)) {
-         if (all(purrr::map_lgl(x, \(o) {inherits(o, "margin")}))) {
-
-          return(purrr::map(x, class_margin))
-         }
-        if (all(purrr::map_lgl(x, \(o) {inherits(o, "unit")}))) {
+        if (
+          all(purrr::map_lgl(x, \(o) {
+            inherits(o, "margin")
+          }))
+        ) {
+          return(purrr::map(x, class_margin)) # nocov
+        }
+        if (
+          all(purrr::map_lgl(x, \(o) {
+            inherits(o, "unit")
+          }))
+        ) {
           return(purrr::map(x, class_margin))
         }
-        if (all(purrr::map_lgl(x, \(o) {S7::S7_inherits(o, class_margin)}))) {
+        if (
+          all(purrr::map_lgl(x, \(o) {
+            S7::S7_inherits(o, class_margin)
+          }))
+        ) {
           return(purrr::map(x, class_margin))
         }
       }
 
-      if (inherits(x, "margin")) {
-
-      } else if (inherits(x, "unit")) {
+      if (inherits(x, "margin")) {} else if (inherits(x, "unit")) {
         if (length(x) == 1) {
-          x <- rep(x, 4)
-          class(x) <- c("margin", class(x))
+          x <- ggplot2::margin(x, x, x, x, unit = units)
         } else if (length(x) == 2) {
-          x <- rep(x, 2)
-          class(x) <- c("margin", class(x))
+          x <- ggplot2::margin(x[1], x[2], x[1], x[2], unit = units)
         } else if (length(x) == 4) {
-          class(x) <- c("margin", class(x))
+          x <- ggplot2::margin(x[1], x[2], x[3], x[4], unit = units)
         } else {
           stop(
-            "Margins can have 1 (all sides), 2 (horiztonal vs vertical), or 4 (top right bottom left) elements."
+            "Margins can have 1 (all sides), 2 (horizontal vs vertical), or 4 (top right bottom left) elements."
           )
         }
       } else {
         stop("Margins can be of class margin, unit, or numeric")
-
       }
     }
     S7::new_object(list(x))
@@ -144,23 +158,29 @@ class_arrowhead <- S7::new_class(
   package = "ggdiagram",
   S7::class_list,
   constructor = function(x) {
-    if (S7::S7_inherits(x, class_arrowhead))
+    if (S7::S7_inherits(x, class_arrowhead)) {
       return(x)
-    if (is.list(x))
+    }
+    if (is.list(x)) {
       return(purrr::map(x, class_arrowhead))
-    if (!(is.numeric(x) &&
-          is.matrix(x) &&
-          ncol(x) == 2))
+    }
+    if (
+      !(is.numeric(x) &&
+        is.matrix(x) &&
+        ncol(x) == 2)
+    ) {
       stop("Arrowheads must be a 2-column matrix of numbers.")
+    }
 
     S7::new_object(list(x))
-
-
   }
 )
 
 
-the$arrow_head <- class_arrowhead(arrowheadr::arrow_head_deltoid(d = 2.3, n = 100))
+the$arrow_head <- class_arrowhead(arrowheadr::arrow_head_deltoid(
+  d = 2.3,
+  n = 100
+))
 
 
 #' Return default arrowhead
@@ -179,7 +199,6 @@ the$arrow_head <- class_arrowhead(arrowheadr::arrow_head_deltoid(d = 2.3, n = 10
 #' arrowhead()
 arrowhead <- function() {
   the$arrow_head
-
 }
 
 #' @rdname arrowhead
@@ -195,16 +214,18 @@ set_default_arrowhead <- function(m = NULL) {
 }
 
 ## has_style ----
-has_style <- S7::new_class(name = "has_style", package = "ggdiagram", properties = list(id = class_character), abstract = TRUE)
+has_style <- S7::new_class(
+  name = "has_style",
+  package = "ggdiagram",
+  properties = list(id = class_character),
+  abstract = TRUE
+)
 S7::S4_register(has_style)
 S7::method(print, has_style) <- function(x, ...) {
   cli::cli_h3("{.cls {S7::S7_class(x)@name}}")
   print(x@tibble)
   invisible(x)
 }
-
-
-
 
 
 ## ob_shape_list ----
@@ -220,8 +241,9 @@ ob_shape_list <- S7::new_class(
   package = "ggdiagram",
   S7::class_list,
   validator = function(self) {
-    if (!all(purrr::map_lgl(self, S7::S7_inherits, class = has_style)))
-      "All objects must be ggdiagram objects that can be converted to geoms"
+    if (!all(purrr::map_lgl(self, S7::S7_inherits, class = has_style))) {
+      "All objects must be ggdiagram objects that can be converted to geoms."
+    }
   }
 )
 
@@ -229,30 +251,28 @@ ob_shape_list <- S7::new_class(
 
 #' @keywords internal
 #' @noRd
-assign_data <- function(x,i, value) {
+assign_data <- function(x, i, value) {
   dx <- x@tibble
   dx_unit <- sapply(dx, grid::is.unit)
   dx_unit <- names(dx_unit[dx_unit])
 
   dx <- dplyr::select(dx, !dplyr::all_of(dx_unit))
 
-
   dv <- value@tibble
   dv_unit <- sapply(dv, grid::is.unit)
   dv_unit <- names(dv_unit[dv_unit])
   dv <- dplyr::select(dv, !dplyr::all_of(dv_unit))
 
-
   # Filtering late necessary because unit variable cannot be
   # zero-length
   d_combined <- dplyr::bind_rows(
-    dx, dv) |>
+    dx,
+    dv
+  ) |>
     dplyr::filter(FALSE)
 
   dx <- d_combined |>
     dplyr::add_row(dx)
-
-
 
   dv <- d_combined |>
     dplyr::add_row(dv)
@@ -271,10 +291,52 @@ shape <- S7::new_class(
 
 S7::method(`[`, shape) <- function(x, i) {
   i <- character_index(i, x@id)
-  z <- data2shape(x@tibble[i,], S7::S7_class(x))
+  z <- data2shape(x@tibble[i, ], S7::S7_class(x))
   z@label <- na2zero(x@label[i])
   z
 }
+
+S7::method(unique, shape) <- function(x, incomparables = FALSE, ...) {
+  d <- x@tibble
+  if (S7::prop_exists(x, "label")) {
+    if (length(x@label) > 0) {
+      if (S7::S7_inherits(x@label, ob_label)) {
+        l <- unbind(x@label)
+
+          d <- d %>%
+            dplyr::mutate(label = l)
+
+
+      }
+
+    }
+  }
+  ud <- d %>%
+    unique()
+
+  u <- ud
+  u$label <- NULL
+
+
+
+  u <- data2shape(u, S7::S7_class(x))
+
+  if ("label" %in% colnames(ud)) {
+    if (all(purrr::map_lgl(ud$label, S7::S7_inherits, class = ob_label))) {
+      u@label <- bind(ud$label)
+    }
+
+    }
+
+  u
+
+}
+
+S7::method(unique, ob_shape_list) <- function(x, incomparables = FALSE, ...) {
+  purrr::map(x, unique) |>
+    ob_shape_list()
+}
+
 
 xy <- S7::new_class(
   name = "xy",
@@ -286,9 +348,17 @@ xy <- S7::new_class(
 # generics ----
 
 ## variance ----
-#' create double-headed arrow paths indicating variance
+#' Variance object
 #'
-#' @param x object
+#' @description
+#' Creates double-headed arrow paths indicating variance
+#'
+#' # Methods
+#' `ob_variance` is an S7 generic with methods available for the following classes:
+#'
+#' `r doclisting::methods_list("ob_variance", "ggdiagram")`
+#'
+#' @param x object of type `r doclisting::methods_inline("ob_variance", "ggdiagram")`
 #' @param where Location on object. Can be numeric (degrees), [degree], [radian], [turn], or named direction (e.g., "northwest", "east", "below", "left")
 #' @param theta angle width
 #' @param looseness distance of control points as a ratio of the distance to the object's center (e.g., in a circle of radius 1, looseness = 1.5 means that that the control points will be 1.5 units from the start and end points.)
@@ -297,21 +367,36 @@ xy <- S7::new_class(
 #' @param ... <[`dynamic-dots`][rlang::dyn-dots]> properties passed to style
 #' @returns Returns an object of type [`ob_bezier`]
 #' @export
-ob_variance <- S7::new_generic("ob_variance", dispatch_args = "x", fun = function(
+ob_variance <- S7::new_generic(
+  "ob_variance",
+  dispatch_args = "x",
+  fun = function(
     x,
     where = "north",
     theta = 50,
     bend = 0,
     looseness = 1,
     arrow_head = the$arrow_head,
+    arrow_fins = the$arrow_head,
     resect = 2,
-    ...) {
-  S7::S7_dispatch()
-})
+    ...
+  ) {
+    S7::S7_dispatch()
+  }
+)
 
 
 ## covariance ----
-#' create double-headed arrow paths indicating variance
+#' Covariance object
+#'
+#' @description Creates double-headed arrow paths indicating variance
+#'
+#' # Methods
+#' `ob_covariance` is an S7 generic with methods available for the following classes:
+#'
+#' `r doclisting::methods_list("ob_covariance", "ggdiagram")`
+#'
+#' @param x object of type `r doclisting::methods_inline("ob_covariance", "ggdiagram")`
 #'
 #' @param x object
 #' @param y object
@@ -325,23 +410,32 @@ ob_variance <- S7::new_generic("ob_variance", dispatch_args = "x", fun = functio
 ob_covariance <- S7::new_generic(
   "ob_covariance",
   dispatch_args = c("x", "y"),
-  fun = function(x,
-                 y,
-                 where = NULL,
-                 bend = 0,
-                 looseness = 1,
-                 arrow_head = the$arrow_head,
-                 length_head = 7,
-                 length_fins = 7,
-                 resect = 2,
-                 ...) {
+  fun = function(
+    x,
+    y,
+    where = NULL,
+    bend = 0,
+    looseness = 1,
+    arrow_head = the$arrow_head,
+    length_head = 7,
+    length_fins = 7,
+    resect = 2,
+    ...
+  ) {
     S7::S7_dispatch()
   }
 )
 
 ## ob_array ----
-#' make an array of shapes along a line
+#' Object Arrays
 #'
+#' @description
+#' Make an array of shapes along a line
+#'
+#' # Methods
+#' `ob_array` is an S7 generic with methods available for the following classes:
+#'
+#' `r doclisting::methods_list("ob_array", "ggdiagram")`
 #' @param x shape
 #' @param k number of duplicate shapes to make
 #' @param sep separation distance between shapes
@@ -350,9 +444,13 @@ ob_covariance <- S7::new_generic(
 #' @param ... <[`dynamic-dots`][rlang::dyn-dots]> properties passed to shape
 #' @returns An array of shapes of the same class as object passed to x
 #' @export
-ob_array <- S7::new_generic(name = "ob_array", dispatch_args = "x", fun = function(x, k = 2, sep = 1, where = "east", anchor = "center", ...) {
-  S7::S7_dispatch()
-})
+ob_array <- S7::new_generic(
+  name = "ob_array",
+  dispatch_args = "x",
+  fun = function(x, k = 2, sep = 1, where = "east", anchor = "center", ...) {
+    S7::S7_dispatch()
+  }
+)
 
 ## bind ----
 
@@ -367,14 +465,15 @@ ob_array <- S7::new_generic(name = "ob_array", dispatch_args = "x", fun = functi
 #' @returns a bound object of same class as x (or list of objects if x contains objects of different types)
 bind <- S7::new_generic(name = "bind", dispatch_args = "x")
 
+S7::method(bind, shape) <- function(x, ...) {x}
+
 S7::method(bind, S7::class_list) <- function(x, ...) {
 
-  all_angles <- all(sapply(lapply(x, class), function(xx)
-    "ob_angle" %in% xx))
+  all_angles <- all(purrr::map_lgl(x, S7::S7_inherits, class = ob_angle))
   if (all_angles) {
     if (length(x) == 0) {
-      return(degree())
-      }
+      return(degree()) # nocov
+    }
     trns <- unlist(x)
     if (S7::S7_inherits(x[[1]], turn)) {
       return(turn(trns))
@@ -398,32 +497,39 @@ S7::method(bind, S7::class_list) <- function(x, ...) {
         x,
         \(o) {
           if (S7::S7_inherits(o, ob_style)) get_tibble(o) else o@tibble
-          }
-        )))
+        }
+      )
+    )
+  )
 
-  .fn <- switch(.f,
-                degree = degree,
-                radian = radian,
-                turn = turn,
-                ob_arc = ob_arc,
-                ob_bezier = ob_bezier,
-                ob_circle = ob_circle,
-                ob_ellipse = ob_ellipse,
-                ob_label = ob_label,
-                ob_line = ob_line,
-                ob_ngon = ob_ngon,
-                ob_path = ob_path,
-                ob_point = ob_point,
-                ob_rectangle = ob_rectangle,
-                ob_reuleaux = ob_reuleaux,
-                ob_segment = ob_segment,
-                ob_style = ob_style,
-                ob_polar = ob_point)
+  .fn <- switch(
+    .f,
+    degree = degree,
+    radian = radian,
+    turn = turn,
+    ob_arc = ob_arc,
+    ob_bezier = ob_bezier,
+    ob_circle = ob_circle,
+    ob_ellipse = ob_ellipse,
+    ob_label = ob_label,
+    ob_line = ob_line,
+    ob_ngon = ob_ngon,
+    ob_path = ob_path,
+    ob_point = ob_point,
+    ob_polygon = ob_polygon,
+    ob_rectangle = ob_rectangle,
+    ob_reuleaux = ob_reuleaux,
+    ob_segment = ob_segment,
+    ob_style = ob_style,
+    ob_polar = ob_point
+  )
   o <- rlang::inject(.fn(!!!d))
   dots <- rlang::list2(...)
   o <- rlang::inject(S7::set_props(o, !!!dots))
-  if (S7::prop_exists(x[[1]], "label") &&
-      !S7::S7_inherits(x[[1]], ob_label)) {
+  if (
+    S7::prop_exists(x[[1]], "label") &&
+      !S7::S7_inherits(x[[1]], ob_label)
+  ) {
     x_label <- purrr::map(x, \(xx) xx@label)
     is_ob_label <- purrr::map_lgl(x_label, S7::S7_inherits, class = ob_label)
     if (any(is_ob_label)) {
@@ -435,10 +541,9 @@ S7::method(bind, S7::class_list) <- function(x, ...) {
         xx
       })
       o@label <- bind(x_label)
-
     }
   }
-  o
+  if (nrow(d) == 0) o[0] else o
 }
 
 
@@ -446,22 +551,29 @@ S7::method(bind, ob_shape_list) <- function(x, ...) {
   .f <- unique(lapply(x, S7::S7_class))
 
   csl <- lapply(.f, \(.ff) {
-    Filter(f = \(xx){
-      S7::S7_inherits(xx, .ff)
-    } , x = S7::S7_data(x)) |>
+    Filter(
+      f = \(xx) {
+        S7::S7_inherits(xx, .ff)
+      },
+      x = S7::S7_data(x)
+    ) |>
       bind()
   })
+
+  # Remove length 0
+  csl[names(Filter(function(o) length(o) == 0, csl))] <- NULL
 
   if (length(csl) > 1) {
     csl_names <- purrr::map_chr(csl, \(xx) S7::S7_class(xx)@name)
     ob_shape_list(csl) |>
       `names<-`(csl_names)
-
   } else {
     csl[[1]]
-
   }
 }
+
+
+
 
 ## unbind ----
 
@@ -475,14 +587,17 @@ S7::method(bind, ob_shape_list) <- function(x, ...) {
 unbind <- S7::new_generic("unbind", dispatch_args = "x")
 
 S7::method(unbind, has_style) <- function(x) {
-  purrr::map(seq(1, x@length), \(i) x[i])
+  if (x@length == 0) return(c(x))
+  purrr::map(seq_len(x@length), \(i) x[i])
 }
 
 S7::method(unbind, ob_shape_list) <- function(x) {
   as.list(x)
 }
 
-#' map_ob
+
+
+#' Map over a ggdiagram object
 #'
 #' A wrapper for [purrr::map]. It takes a ggdiagram object with multiple elements, applies a function to each element within the object, and returns a ggdiagram object
 #' @param .x a ggdiagram object
@@ -495,30 +610,75 @@ S7::method(unbind, ob_shape_list) <- function(x) {
 map_ob <- function(.x, .f, ..., .progress = FALSE) {
   if (S7::S7_inherits(.x, has_style) | S7::S7_inherits(.x, ob_angle)) {
     .x <- unbind(.x)
-     }
+  }
+  if (S7::S7_inherits(.x, ob_shape_list)) {
+    .x <- c(.x)
+  }
   purrr::map(.x, .f, ..., .progress = .progress) |>
+    bind()
+}
+
+#' Map over two ggdiagram objects
+#'
+#' A wrapper for [purrr::map2]. It takes two ggdiagram objects with multiple elements, applies a function to each element within the objects, and returns a ggdiagram object
+#' @param .x a ggdiagram object
+#' @param .y a ggdiagram object
+#' @param .f a function that returns a ggdiagram object
+#' @param ... <[`dynamic-dots`][rlang::dyn-dots]> arguments passed to .f
+#' @param .progress display progress if TRUE
+#'
+#' @returns a ggdiagram object
+#' @export
+map2_ob <- function(.x, .y, .f, ..., .progress = FALSE) {
+  if (S7::S7_inherits(.x, has_style) | S7::S7_inherits(.x, ob_angle)) {
+    .x <- unbind(.x)
+  }
+  if (S7::S7_inherits(.y, has_style) | S7::S7_inherits(.y, ob_angle)) {
+    .y <- unbind(.y)
+  }
+
+  if (S7::S7_inherits(.x, ob_shape_list)) {
+    .x <- c(.x)
+  }
+
+  if (S7::S7_inherits(.y, ob_shape_list)) {
+    .y <- c(.y)
+  }
+  purrr::map2(.x, .y, .f, ..., .progress = .progress) |>
     bind()
 }
 
 
 ## str----
-str <- S7::new_external_generic(package = "utils", name = "str", dispatch_args = "object")
-
+str <- S7::new_external_generic(
+  package = "utils",
+  name = "str",
+  dispatch_args = "object"
+)
 
 
 ## plus----
 S7::method(`+`, list(S7::class_any, S7::class_any)) <- function(e1, e2) {
-  .Primitive("+")(e1, e2)
+  .Primitive("+")(e1, e2) # nocov
 }
 
-S7::method(`+`, list(S7::class_character, S7::class_character)) <- function(e1, e2) {
-  paste0(e1, e2)
+S7::method(`+`, list(S7::class_character, S7::class_character)) <- function(
+  e1,
+  e2
+) {
+  paste0(e1, e2) # nocov
 }
-S7::method(`+`, list(S7::class_numeric, S7::class_character)) <- function(e1, e2) {
-  paste0(e1, e2)
+S7::method(`+`, list(S7::class_numeric, S7::class_character)) <- function(
+  e1,
+  e2
+) {
+  paste0(e1, e2) # nocov
 }
-S7::method(`+`, list(S7::class_character, S7::class_numeric)) <- function(e1, e2) {
-  paste0(e1, e2)
+S7::method(`+`, list(S7::class_character, S7::class_numeric)) <- function(
+  e1,
+  e2
+) {
+  paste0(e1, e2)# nocov
 }
 
 ## get_tibble----
@@ -527,10 +687,18 @@ S7::method(`+`, list(S7::class_character, S7::class_numeric)) <- function(e1, e2
 #' @param x object
 #' @export
 #' @returns a [tibble::tibble]
-get_tibble <- S7::new_generic("get_tibble", "x", fun = function(x) {S7::S7_dispatch()})
+get_tibble <- S7::new_generic("get_tibble", "x", fun = function(x) {
+  S7::S7_dispatch()
+})
 S7::method(get_tibble, S7::class_list) <- function(x) {
-  purrr::map_df(S7::S7_data(x), get_tibble)
+  purrr::map_df(x, get_tibble)
 }
+
+S7::method(get_tibble, ob_shape_list) <- function(x) {
+  purrr::map(S7::S7_data(x), get_tibble)
+}
+
+
 
 # Resect ----
 #' resect
@@ -551,10 +719,20 @@ resect <- S7::new_generic("resect", c("x", "distance"))
 #' @export
 #' @returns a [tibble::tibble]
 #' @rdname get_tibble
-get_tibble_defaults <- S7::new_generic("get_tibble_defaults", "x", fun = function(x) S7::S7_dispatch())
+get_tibble_defaults <- S7::new_generic(
+  "get_tibble_defaults",
+  "x",
+  fun = function(x) S7::S7_dispatch()
+)
 S7::method(get_tibble_defaults, S7::class_any) <- function(x) {
   get_tibble(x)
 }
+
+# length shape ----
+S7::method(length, shape) <- function(x) {
+  x@length
+}
+
 
 
 #' Move an object
@@ -572,7 +750,10 @@ S7::method(get_tibble_defaults, S7::class_any) <- function(x) {
 nudge <- S7::new_generic("nudge", c("object", "x", "y"))
 
 # unions ----
-class_numeric_or_character <- S7::new_union(S7::class_numeric, S7::class_character)
+class_numeric_or_character <- S7::new_union(
+  S7::class_numeric,
+  S7::class_character
+)
 class_numeric_or_unit <- S7::new_union(S7::class_numeric, class_unit)
 
 #' Make a variant of a function with alternate defaults
@@ -636,9 +817,11 @@ redefault <- function(.f, ...) {
 #' @keywords internal
 #' @noRd
 cardinalpoint <- function(x) {
-  .namedpositions
   if (!all(x %in% names(.namedpositions))) {
-    stop(paste0("Position must be an angle, numeric, or one of these named positions:\n", stringr::str_wrap(paste0(names(.namedpositions), collapse = ", "))))
+    stop(paste0(
+      "Position must be an angle, numeric, or one of these named positions:\n",
+      stringr::str_wrap(paste0(names(.namedpositions), collapse = ", "))
+    ))
   }
   unname(.namedpositions[x])
 }
@@ -648,8 +831,9 @@ cardinalpoint <- function(x) {
 allsameclass <- function(l, classname) {
   classname[classname == "ob_polar"] <- "ob_point"
   classname <- paste0("ggdiagram::", classname)
-  allsame <- all(sapply(lapply(l, class), function(x)
-    classname %in% x))
+  allsame <- all(sapply(lapply(l, class), function(x) {
+    classname %in% x
+  }))
   if (!allsame) {
     paste0("All items must be ", classname, ".")
   }
@@ -657,11 +841,8 @@ allsameclass <- function(l, classname) {
 
 #' @keywords internal
 #' @noRd
-aes_injection <- function(bare_mapping,
-                          identity_mapping,
-                          omit_mapping = NULL) {
-  identity_mapping <- setdiff(identity_mapping,
-                              c(bare_mapping, omit_mapping))
+aes_injection <- function(bare_mapping, identity_mapping, omit_mapping = NULL) {
+  identity_mapping <- setdiff(identity_mapping, c(bare_mapping, omit_mapping))
   bare_mapping <- setdiff(bare_mapping, omit_mapping)
   i_styles <- purrr::map(rlang::syms(identity_mapping), \(i) call("I", i))
   names(i_styles) <- identity_mapping
@@ -669,18 +850,16 @@ aes_injection <- function(bare_mapping,
   names(b_styles) <- bare_mapping
 
   ggplot2::aes(!!!b_styles, !!!i_styles)
-
 }
-
 
 
 #' @keywords internal
 #' @noRd
 get_tibble_defaults_helper <- function(
-    x,
-    default_style,
-    required_aes = c("x", "y")) {
-
+  x,
+  default_style,
+  required_aes = c("x", "y")
+) {
   d <- get_tibble(x) |>
     dplyr::select(-dplyr::any_of("id"))
 
@@ -693,35 +872,40 @@ get_tibble_defaults_helper <- function(
   }
 
   for (n in setdiff(colnames(d), required_aes)) {
-    d_prop <- S7::prop(default_style, n)
-    if (!(is.null(d_prop) || identical(d_prop, list()))) {
-      d_prop <- ifelse(is.vector(d_prop), d_prop, c(d_prop))
-      missings <- is.na(`[[`(d, n))
-      if (!all(missings) && any(missings)) {
-        d[missings, n] <- d_prop
+    if (S7::prop_exists(default_style, n)) {
+      d_prop <- S7::prop(default_style, n)
+      if (!(is.null(d_prop) || identical(d_prop, list()))) {
+        d_prop <- ifelse(is.vector(d_prop), d_prop, c(d_prop))
+        missings <- is.na(`[[`(d, n))
+        if (!all(missings) && any(missings)) {
+          d[missings, n] <- d_prop
+        }
       }
 
-
     }
+
   }
   d
 }
 
 
-
 #' @keywords internal
 #' @noRd
 get_non_empty_props <- function(x) {
-  Filter(function(s) {
-    ifelse(length(s) > 0,
-           ifelse(
-             S7::S7_inherits(s),
-             length(S7::S7_data(s)) > 0,
-             !rlang::is_function(s)
-           ),
-           FALSE)
-
-  }, props(x))
+  Filter(
+    function(s) {
+      ifelse(
+        length(s) > 0,
+        ifelse(
+          S7::S7_inherits(s),
+          length(S7::S7_data(s)) > 0,
+          !rlang::is_function(s)
+        ),
+        FALSE
+      )
+    },
+    props(x)
+  )
 }
 
 #' @keywords internal
@@ -741,7 +925,9 @@ get_non_empty_tibble <- function(d) {
 #' @keywords internal
 #' @noRd
 replace_na <- function(x, y) {
-  if (rlang::is_quosure(x)) return(y)
+  if (rlang::is_quosure(x)) {
+    return(y)
+  }
   ifelse(is.na(x), y, x)
 }
 
@@ -758,8 +944,17 @@ na2zero <- function(x) {
 
 #' @keywords internal
 #' @noRd
-ob_array_helper <- function(x, k = 2, sep = 1, where = "east", anchor = "center", ...) {
-  if (x@length > 1) {stop("The shape must start with an object of length 1.")}
+ob_array_helper <- function(
+  x,
+  k = 2,
+  sep = 1,
+  where = "east",
+  anchor = "center",
+  ...
+) {
+  if (x@length > 1) {
+    stop("The shape must start with an object of length 1.")
+  }
 
   dots <- rlang::list2(...)
 
@@ -784,16 +979,14 @@ ob_array_helper <- function(x, k = 2, sep = 1, where = "east", anchor = "center"
 
   if (S7::S7_inherits(x@label, ob_label)) {
     if (x@label@length == 1) {
-      l <- ob_label(subscript(x@label@label, seq(k)),
-                 style = x@style,
-                 center = p_center)
+      l <- ob_label(
+        subscript(x@label@label, seq(k)),
+        style = x@style,
+        center = p_center
+      )
     }
 
-    if (x@label@length == k) {
-      l <- ob_label(x@label@label,
-                 style = x@style,
-                 center = p_center)
-    }
+
   }
 
   if (is.null(dots$label)) {
@@ -802,9 +995,11 @@ ob_array_helper <- function(x, k = 2, sep = 1, where = "east", anchor = "center"
     }
   } else {
     if (S7::S7_inherits(dots$label, ob_label)) {
-      dots$label <- ob_label(center = p_center,
-                          label = dots$label@label,
-                          style = dots$label@style)
+      dots$label <- ob_label(
+        center = p_center,
+        label = dots$label@label,
+        style = dots$label@style
+      )
     }
   }
 
@@ -816,9 +1011,7 @@ ob_array_helper <- function(x, k = 2, sep = 1, where = "east", anchor = "center"
     p_center = p_center,
     dots = dots
   )
-
 }
-
 
 
 #' Create subscripts
@@ -831,19 +1024,19 @@ ob_array_helper <- function(x, k = 2, sep = 1, where = "east", anchor = "center"
 #' @export
 #'
 #' @examples
-#' ggdiagram() +
-#'   ob_circle(label = ob_label(subscript("X", 1), size = 16)) +
-#'   ob_circle(x = 3, label = ob_label(superscript("A", 2), size = 16))
-subscript <- function(x,
-                      subscript = seq(length(x)),
-                      output = c("markdown", "latex")) {
+#' subscript("X", 1)
+#' superscript("A", 2)
+subscript <- function(
+  x,
+  subscript = seq(length(x)),
+  output = c("markdown", "latex")
+) {
   output <- match.arg(output)
   if (output == "markdown") {
     paste0(x, "<sub>", subscript, "</sub>")
   } else {
     paste0(x, "_{", subscript, "}")
   }
-
 }
 
 #' Create superscript
@@ -855,16 +1048,17 @@ subscript <- function(x,
 #' @returns string
 #' @rdname subscript
 #' @export
-superscript <- function(x,
-                        superscript = seq(length(x)),
-                      output = c("markdown", "latex")) {
+superscript <- function(
+  x,
+  superscript = seq(length(x)),
+  output = c("markdown", "latex")
+) {
   output <- match.arg(output)
   if (output == "markdown") {
     paste0(x, "<sup>", superscript, "</sup>")
   } else {
     paste0(x, "^{", superscript, "}")
   }
-
 }
 
 
@@ -880,7 +1074,9 @@ superscript <- function(x,
 #' @returns a vector of numbers converted to characters
 #' @export
 signs_centered <- function(x, space = NULL, encoding = "UTF-8", ...) {
-  if (is.null(space)) space <- "\u2007"
+  if (is.null(space)) {
+    space <- "\u2007"
+  }
   x_new <- paste0(signs::signs(x, ...), ifelse(x < 0, space, ""))
   Encoding(x_new) <- encoding
   x_new
@@ -902,40 +1098,41 @@ signs_centered <- function(x, space = NULL, encoding = "UTF-8", ...) {
 #' @export
 #' @examples
 #' round_probability(c(0, .0012, .012, .12, .99, .992, .9997, 1), digits = 2)
-round_probability <- function(p,
-                              accuracy = 0.01,
-                              digits = NULL,
-                              max_digits = NULL,
-                              remove_leading_zero = TRUE,
-                              round_zero_one = TRUE,
-                              phantom_text = NULL,
-                              phantom_color = NULL) {
+round_probability <- function(
+  p,
+  accuracy = 0.01,
+  digits = NULL,
+  max_digits = NULL,
+  remove_leading_zero = TRUE,
+  round_zero_one = TRUE,
+  phantom_text = NULL,
+  phantom_color = NULL
+) {
   if (is.null(digits)) {
     l <- scales::number(p, accuracy = accuracy)
-  }
-  else {
+  } else {
     abs_p <- abs(p)
     sig_digits <- abs(ceiling(log10(abs_p + abs_p / 1e+09)) - digits)
     pgt99 <- abs_p > 0.99
     sig_digits[pgt99] <- abs(ceiling(log10(1 - abs_p[pgt99])) - digits + 1)
 
-
-    sig_digits[ceiling(log10(abs_p)) == log10(abs_p) &
-                 (-log10(abs_p) >= digits)] <-
-      sig_digits[ceiling(log10(abs_p)) == log10(abs_p) &
-                   (-log10(abs_p) >= digits)] - 1
-
+    sig_digits[
+      ceiling(log10(abs_p)) == log10(abs_p) &
+        (-log10(abs_p) >= digits)
+    ] <-
+      sig_digits[
+        ceiling(log10(abs_p)) == log10(abs_p) &
+          (-log10(abs_p) >= digits)
+      ] -
+      1
 
     sig_digits[is.infinite(sig_digits)] <- 0
 
-
-    l <- purrr::map2_chr(p, sig_digits,
-                         formatC,
-                         format = "f",
-                         flag = "#")
+    l <- purrr::map2_chr(p, sig_digits, formatC, format = "f", flag = "#")
   }
-  if (remove_leading_zero)
+  if (remove_leading_zero) {
     l <- sub("^-0", "-", sub("^0", "", l))
+  }
   if (round_zero_one) {
     l[p == 0] <- "0"
     l[p == 1] <- "1"
@@ -946,43 +1143,41 @@ round_probability <- function(p,
       l[round(p, digits = max_digits) == 0] <- "0"
       l[round(p, digits = max_digits) == 1] <- "1"
       l[round(p, digits = max_digits) == -1] <- "-1"
-    }
-    else {
+    } else {
       l[round(p, digits = max_digits) == 0] <- paste0(
         ".",
-        paste0(rep("0", max_digits),
-               collapse = ""))
-
+        paste0(rep("0", max_digits), collapse = "")
+      )
 
       l[round(p, digits = max_digits) == 1] <- paste0(
         "1.",
-        paste0(rep("0", max_digits),
-               collapse = ""))
-
+        paste0(rep("0", max_digits), collapse = "")
+      )
 
       l[round(p, digits = max_digits) == -1] <- paste0(
         "-1.",
-        paste0(rep("0", max_digits),
-               collapse = ""))
+        paste0(rep("0", max_digits), collapse = "")
+      )
     }
   }
-  l <- sub(pattern = "-",
-           replacement = "\u2212",
-           x = l)
+  l <- sub(pattern = "-", replacement = "\u2212", x = l)
   if (!is.null(phantom_text)) {
     phantom_text <- paste0(
       ifelse(p < 0, "\u2212", ""),
-      phantom_text)
-    if (is.null(phantom_color)) phantom_color <- "white"
+      phantom_text
+    )
+    if (is.null(phantom_color)) {
+      phantom_color <- "white"
+    }
     l <- paste0(
       l,
       "<span style='color: ",
       phantom_color,
       "'>",
       phantom_text,
-      "</span>")
+      "</span>"
+    )
   }
-
 
   Encoding(l) <- "UTF-8"
   dim(l) <- dim(p)
@@ -990,32 +1185,11 @@ round_probability <- function(p,
 }
 
 
-
-# https://github.com/RConsortium/S7/issues/370
-#' @keywords internal
-#' @noRd
-prop_integer_coerce <- function(name) {
-  S7::new_property(
-    name = name,
-    class = S7::class_integer,
-    setter = function(self, value) {
-      if (rlang::is_integerish(value)) {
-        value <- as.integer(value)
-      }
-      S7::prop(self, name) <- value
-      self
-    }
-  )
-}
-
 #' @keywords internal
 #' @noRd
 .simpleCap <- function(x) {
   s <- strsplit(x, " ")[[1]]
-  paste(toupper(substring(s, 1, 1)),
-        substring(s, 2),
-        sep = "",
-        collapse = " ")
+  paste(toupper(substring(s, 1, 1)), substring(s, 2), sep = "", collapse = " ")
 }
 
 
@@ -1026,9 +1200,54 @@ prop_integer_coerce <- function(name) {
   ub <- apply(b, 1, max)
   lb <- apply(b, 1, min)
   (x >= lb) & (x <= ub)
-
 }
 
+
+#' Finds the "previous" (lag) or "next" (lead) values in a vector or object with values at the end of the vector recycled to the beginning.
+#'
+#' @param x A vector or ggdiagram object
+#' @param n Positive integer of length 1, giving the number of positions to lag or lead by
+#'
+#' @returns A vector with the same type and size as x but with elements shifted and cycled by n.
+#' @export
+#'
+#' @examples
+#' lead_cycle(1:5)
+#' lead_cycle(1:5, 2)
+#' lag_cycle(1:5)
+#' lag_cycle(1:5, 2)
+lead_cycle <- function(x, n = 1L) {
+  k <- length(x)
+  if (k < 2L) {
+    return(x)
+  }
+
+  ni <- as.integer(n)
+
+  if (!((ni == n) && ni > 0L && ni < k)) {
+    stop("n must be a positive integer less than length of x.")
+  }
+
+
+
+  x[c(seq(ni + 1,k), seq(1, ni))]
+}
+
+#' @rdname lead_cycle
+#' @export
+lag_cycle <- function(x, n = 1L) {
+  k <- length(x)
+  if (k < 2) {
+    return(x)
+  }
+
+  ni <- as.integer(n)
+
+  if (!((ni == n) && ni > 0 && ni < k)) {
+    stop("n must be a positive integer less than length of x.")
+  }
+  x[c(seq(k - ni + 1, k), seq(1, k - ni))]
+}
 
 
 # as.geom ----
@@ -1053,38 +1272,39 @@ prop_integer_coerce <- function(name) {
 as.geom <- S7::new_generic("as.geom", "x")
 
 S7::method(as.geom, ob_shape_list) <- function(x, ...) {
-    unlist(lapply(c(x), \(g) as.geom(g, ...)))
+  unlist(lapply(c(x), \(g) as.geom(g, ...)))
 }
 
 S7::method(`+`, list(class_gg, has_style)) <- function(e1, e2) {
-  e1 + as.geom(e2)
+  e1 + as.geom(e2) # nocov
 }
 
 S7::method(`+`, list(class_gg, ob_shape_list)) <- function(e1, e2) {
-  e1 + as.geom(e2)
+  e1 + as.geom(e2) # nocov
 }
 
 S7::method(update_ggplot, list(has_style, class_ggplot)) <-
   function(object, plot, ...) {
-    plot + as.geom(object)
+    plot + as.geom(object) # nocov
   }
 
 #' @noRd
 #' @keywords internal
-make_geom_helper <- function(d = NULL,
-                             aesthetics,
-                             user_overrides,
-                             ...) {
-
+make_geom_helper <- function(d = NULL, aesthetics, user_overrides, ...) {
   omit_names <- unique(
-    c(aesthetics@omit_names,
+    c(
+      aesthetics@omit_names,
       setdiff(
         names(ob_style@properties),
         unique(c(
           aesthetics@mappable_bare,
           aesthetics@required_aes,
           aesthetics@not_mappable,
-          aesthetics@mappable_identity)))))
+          aesthetics@mappable_identity
+        ))
+      )
+    )
+  )
 
   # add group so that I() function will not disturb drawing order
   if (!("group" %in% unique(c(omit_names, colnames(d))))) {
@@ -1099,34 +1319,36 @@ make_geom_helper <- function(d = NULL,
   d_unit_names <- names(d_isunit[d_isunit])
   d_unit_types <- purrr::map_chr(d_nested[, d_unit_names], grid::unitType)
 
-  d_nested <- dplyr::mutate(d_nested,
-                            dplyr::across(dplyr::all_of(d_unit_names),
-                                          .fns = as.numeric))
+  d_nested <- dplyr::mutate(
+    d_nested,
+    dplyr::across(dplyr::all_of(d_unit_names), .fns = as.numeric)
+  )
 
-  d_all <- tidyr::nest(d_nested, .by = dplyr::all_of("data"), .key = "unmappable")
+  d_all <- tidyr::nest(
+    d_nested,
+    .by = dplyr::all_of("data"),
+    .key = "unmappable"
+  )
 
   # make geom for each row in d_nested
   purrr::pmap(d_all, \(data, unmappable) {
-
     if ("p_unnest" %in% colnames(data)) {
-      data <- tidyr::unnest(data = data, .data$p_unnest)
+      data <- tidyr::unnest(data = data, "p_unnest")
     }
 
     # make list of not mapped arguments
     not_mapped <- as.list(unmappable)
 
-    not_mapped <- purrr::map2(not_mapped,
-                              names(not_mapped), \(x, name) {
+    not_mapped <- purrr::map2(not_mapped, names(not_mapped), \(x, name) {
       if (name %in% c("label.margin", "label.padding")) {
         x <- x[[1]]
       }
       x
     })
 
-    not_mapped <- purrr::map2(not_mapped,
-                              names(not_mapped), \(x, name) {
+    not_mapped <- purrr::map2(not_mapped, names(not_mapped), \(x, name) {
       if (name %in% d_unit_names) {
-        x <- grid::unit(x, d_unit_types[name])
+        x <- grid::unit(x, d_unit_types[name]) # nocov
       }
       x
     })
@@ -1134,22 +1356,24 @@ make_geom_helper <- function(d = NULL,
     # get mappable names
     data_names <- colnames(data)
 
-
-
     # get names for bare mapping
-    bare_mapping <- intersect(unique(c(aesthetics@required_aes,
-                                       aesthetics@mappable_bare)),
-                              data_names)
+    bare_mapping <- intersect(
+      unique(c(aesthetics@required_aes, aesthetics@mappable_bare)),
+      data_names
+    )
 
     # omitted arguments
-    omit_mapping <- unique(c(omit_names,
-                             names(user_overrides),
-                             not_mapped_names))
+    omit_mapping <- unique(c(
+      omit_names,
+      names(user_overrides),
+      not_mapped_names
+    ))
 
     # gename names for identity mapping
     identity_mapping <- setdiff(
       data_names,
-      unique(c(bare_mapping, omit_mapping)))
+      unique(c(bare_mapping, omit_mapping))
+    )
 
     myaes <- aes_injection(
       bare_mapping = bare_mapping,
@@ -1170,9 +1394,7 @@ make_geom_helper <- function(d = NULL,
 #' @keywords internal
 #' @noRd
 trimmer <- function(x) {
-  notabs <- gsub(x = x,
-                 pattern = "\\t",
-                 replacement = " ")
+  notabs <- gsub(x = x, pattern = "\\t", replacement = " ")
   trimws(gsub(
     x = notabs,
     pattern = "\\s+",
@@ -1182,17 +1404,32 @@ trimmer <- function(x) {
 
 #' @keywords internal
 #' @noRd
-rounder <- function(x, digits = 2, add = FALSE, output = c("markdown", "latex")) {
+rounder <- function(
+  x,
+  digits = 2,
+  add = FALSE,
+  output = c("markdown", "latex")
+) {
   output <- match.arg(output)
   minus <- ifelse(output == "markdown", "\u2212", "-")
   if (add) {
-    r <- paste0(ifelse(x > 0, " + ", paste0(" ", minus, " ")), trimws(formatC(
-        abs(x), digits = digits, format = "fg"
-      )))
+    r <- paste0(
+      ifelse(x > 0, " + ", paste0(" ", minus, " ")),
+      trimws(formatC(
+        abs(x),
+        digits = digits,
+        format = "fg"
+      ))
+    )
   } else {
-    r <- paste0(ifelse(x > 0, "", minus), trimws(formatC(
-      abs(x), digits = digits, format = "fg"
-    )))
+    r <- paste0(
+      ifelse(x > 0, "", minus),
+      trimws(formatC(
+        abs(x),
+        digits = digits,
+        format = "fg"
+      ))
+    )
   }
   r
 }
@@ -1220,26 +1457,20 @@ emphasis <- function(x, output = "markdown") {
 #' @examples
 #' l1 <- ob_line(slope = 2, intercept = 4)
 #' c1 <- ob_circle(radius = 3)
-#' ggdiagram() +
-#'   l1 +
-#'   c1 +
-#'   ob_label(label = equation(c1),
-#'            center = c1@center,
-#'            size = 16) +
-#'   ob_label(label = equation(l1),
-#'            center = ob_segment(intersection(l1, c1))@midpoint(),
-#'            angle = l1@angle,
-#'            size = 16) +
-#'  ggplot2::theme_minimal(base_size = 20)
+#' equation(c1)
+#' equation(l1)
 equation <- S7::new_generic(
   "equation",
   dispatch_args = "x",
-  fun = function(x,
-                 type = c("y", "general", "parametric"),
-                 output = c("markdown", "latex"),
-                 digits = 2) {
+  fun = function(
+    x,
+    type = c("y", "general", "parametric"),
+    output = c("markdown", "latex"),
+    digits = 2
+  ) {
     S7::S7_dispatch()
-    })
+  }
+)
 
 
 # Projection ----
@@ -1275,14 +1506,15 @@ midpoint <- S7::new_generic(
 #' @keywords internal
 #' @noRd
 rotate2columnmatrix <- function(x, theta) {
-  if (all(theta == 0)) return(x)
-  x_rotated <- x %*%  matrix(
-    c(cos(theta),
-      -sin(theta),
-      sin(theta),
-      cos(theta)),
-    nrow = 2,
-    ncol = 2)
+  if (all(theta == 0)) {
+    return(x)
+  }
+  x_rotated <- x %*%
+    matrix(
+      c(cos(theta), -sin(theta), sin(theta), cos(theta)),
+      nrow = 2,
+      ncol = 2
+    )
   colnames(x_rotated) <- NULL
   x_rotated
 }
@@ -1313,37 +1545,39 @@ label_object <- S7::new_generic("label_object", "object")
 connect <- S7::new_generic(
   "connect",
   c("from", "to"),
-  function(from,
-           to,
-           ...,
-           label = character(0),
-           arc_bend = NULL,
-           from_offset = NULL,
-           to_offset = NULL,
-           alpha = numeric(0),
-           arrow_head = the$arrow_head,
-           arrow_fins = list(),
-           arrowhead_length = 7,
-           length_head = numeric(0),
-           length_fins = numeric(0),
-           color = character(0),
-           lineend = numeric(0),
-           linejoin = numeric(0),
-           linewidth = numeric(0),
-           linewidth_fins = numeric(0),
-           linewidth_head = numeric(0),
-           linetype = numeric(0),
-           resect = numeric(0),
-           resect_fins = numeric(0),
-           resect_head = numeric(0),
-           stroke_color = character(0),
-           stroke_width = numeric(0),
-           style = S7::class_missing,
-           label_sloped = TRUE,
-           id = character(0)) {
+  function(
+    from,
+    to,
+    ...,
+    label = character(0),
+    arc_bend = NULL,
+    from_offset = NULL,
+    to_offset = NULL,
+    alpha = numeric(0),
+    arrow_head = the$arrow_head,
+    arrow_fins = list(),
+    arrowhead_length = 7,
+    length_head = numeric(0),
+    length_fins = numeric(0),
+    color = character(0),
+    lineend = numeric(0),
+    linejoin = numeric(0),
+    linewidth = numeric(0),
+    linewidth_fins = numeric(0),
+    linewidth_head = numeric(0),
+    linetype = numeric(0),
+    resect = numeric(0),
+    resect_fins = numeric(0),
+    resect_head = numeric(0),
+    stroke_color = character(0),
+    stroke_width = numeric(0),
+    style = S7::class_missing,
+    label_sloped = TRUE,
+    id = character(0)
+  ) {
     S7::S7_dispatch()
-  })
-
+  }
+)
 
 
 #' Place an object a specified distance from another object
@@ -1355,12 +1589,13 @@ connect <- S7::new_generic(
 #' @param ... <[`dynamic-dots`][rlang::dyn-dots]> Arguments passed to [ob_style]
 #' @export
 #' @returns object of same class as `x`
-place <- S7::new_generic("place", c("x", "from"),
-                     fun = function(x, from, where = "right", sep = 1, ...) {
-                       S7::S7_dispatch()
-                     })
-
-
+place <- S7::new_generic(
+  "place",
+  c("x", "from"),
+  fun = function(x, from, where = "right", sep = 1, ...) {
+    S7::S7_dispatch()
+  }
+)
 
 
 #' ggdiagram function
@@ -1382,52 +1617,61 @@ place <- S7::new_generic("place", c("x", "from"),
 #'    ob_circle(label = "Circle") +
 #'    ob_rectangle(label = "Rectangle", x = 3, width = 3)
 ggdiagram <- function(
-    font_family = "sans",
-    font_size = 11,
-    linewidth = .5,
-    point_size = 1.5,
-    rect_linewidth = linewidth,
-    theme_function = ggplot2::theme_void,
-    ...) {
-
+  font_family = "sans",
+  font_size = 11,
+  linewidth = .5,
+  point_size = 1.5,
+  rect_linewidth = linewidth,
+  theme_function = ggplot2::theme_void,
+  ...
+) {
   ggplot2::update_geom_defaults(
     geom = ggtext::GeomRichText,
-    new = list(family = font_family,
-               size = font_size / ggplot2::.pt))
+    new = list(family = font_family, size = font_size / ggplot2::.pt)
+  )
 
   ggplot2::update_geom_defaults(
     geom = "line",
-    new = list(linewidth = linewidth))
+    new = list(linewidth = linewidth)
+  )
 
   ggplot2::update_geom_defaults(
     geom = "point",
-    new = list(size = point_size))
+    new = list(size = point_size)
+  )
 
   ggplot2::update_geom_defaults(
     geom = ggarrow::GeomArrowSegment,
-    new = list(linewidth = linewidth))
+    new = list(linewidth = linewidth)
+  )
 
   ggplot2::update_geom_defaults(
     geom = ggarrow::GeomArrow,
-    new = list(linewidth = linewidth))
+    new = list(linewidth = linewidth)
+  )
 
   ggplot2::update_geom_defaults(
     geom = geomtextpath::GeomLabelpath,
     list(
       family = font_family,
-      size = font_size / ggplot2::.pt))
+      size = font_size / ggplot2::.pt
+    )
+  )
 
   ggplot2::update_geom_defaults(
     geom = ggplot2::GeomPolygon,
-    list(linewidth = linewidth))
+    list(linewidth = linewidth)
+  )
 
   ggplot2::update_geom_defaults(
     geom = ggforce::GeomCircle,
-    list(linewidth = linewidth))
+    list(linewidth = linewidth)
+  )
 
   ggplot2::update_geom_defaults(
     geom = ggforce::GeomShape,
-    list(linewidth = linewidth))
+    list(linewidth = linewidth)
+  )
 
   ggplot2::ggplot() +
     theme_function(
@@ -1457,8 +1701,7 @@ ggdiagram <- function(
 #'   color = NA,
 #'   radius = c(.25,0.5))
 #'
-#' ggdiagram() +
-#'   data2shape(d, ob_circle)
+#' data2shape(d, ob_circle)
 data2shape <- function(data, shape) {
   l <- as.list(data)
   rlang::inject(shape(!!!l))
@@ -1489,17 +1732,21 @@ get_depth <- function(x, model, depth = 0L, max_depth = 20) {
   }
 
   if (!all(c("op", "lhs", "rhs") %in% colnames(model))) {
-    stop("model must be a lavaan fit object, a lavaan parameter table, or a character vector specifying a lavaan model.")
+    stop(
+      "model must be a lavaan fit object, a lavaan parameter table, or a character vector specifying a lavaan model."
+    )
   }
 
   purrr::map_int(
     x,
-    \(xx) get_depth_helper(
-      xx,
-      model = model,
-      depth = depth,
-      max_depth = 20
-    )
+    \(xx) {
+      get_depth_helper(
+        xx,
+        model = model,
+        depth = depth,
+        max_depth = 20
+      )
+    }
   )
 }
 
@@ -1513,7 +1760,6 @@ get_depth <- function(x, model, depth = 0L, max_depth = 20) {
 #' @keywords internal
 #' @noRd
 get_depth_helper <- function(x, model, depth = 0L, max_depth = 20) {
-
   # Does it have children?
   children <- model %>%
     dplyr::filter(.data$op == "=~", .data$lhs %in% x) %>%
@@ -1521,7 +1767,9 @@ get_depth_helper <- function(x, model, depth = 0L, max_depth = 20) {
     unique()
 
   # Detect infinite loops
-  if (depth >= max_depth) stop("Maximum depth reached. May be nonrecursive. ")
+  if (depth >= max_depth) {
+    stop("Maximum depth reached. May be nonrecursive. ")
+  }
 
   # Do children have children?
   if (length(children) > 0) {

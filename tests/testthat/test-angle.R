@@ -28,6 +28,10 @@ test_that("trig functions work with ob_angle", {
   expect_equal(tan(turn(.5)), tanpi(1))
 })
 
+test_that("cardinal point", {
+  expect_identical(ob_angle(.25), ob_angle("north"))
+})
+
 test_that("equality with ob_angle", {
   tidyr::crossing(tibble::tibble(
     .f = list(degree, radian, turn, ob_angle),
@@ -115,7 +119,7 @@ test_that("misc angle", {
   a@turn <- 0.5
   expect_identical(a@turn, 0.5)
 
-  expect_no_error(capture.output(print(a), file = nullfile()))
+  expect_no_error(capture.output(print(a)))
 
 })
 
@@ -127,3 +131,78 @@ test_that(
     expect_identical(x, degree(c(1,100, 3:20)))
   }
 )
+
+test_that("cross-unit conversions", {
+  expect_equal(degree(180)@radian, pi)
+  expect_equal(degree(180)@turn, 0.5)
+  expect_equal(radian(pi)@degree, 180)
+  expect_equal(radian(pi)@turn, 0.5)
+  expect_equal(turn(0.5)@degree, 180)
+  expect_equal(turn(0.5)@radian, pi)
+})
+
+test_that("ob_angle subclasses accept each other as input", {
+  expect_equal(degree(radian(pi))@degree, 180)
+  expect_equal(radian(degree(180))@radian, pi)
+  expect_equal(turn(degree(180))@turn, 0.5)
+})
+
+test_that("numeric arithmetic respects the unit of the angle class", {
+  expect_equal((degree(10) + 10)@degree, 20)
+  expect_equal((radian(1) + 1)@radian, 2)
+  expect_equal((turn(0.25) + 0.25)@turn, 0.5)
+})
+
+test_that("upright flips angles in the 91-270 range", {
+  expect_equal(degree(45)@upright@degree,  45)
+  expect_equal(degree(135)@upright@degree, 315)
+  expect_equal(degree(270)@upright@degree,  90)
+  expect_equal(degree(315)@upright@degree, 315)
+})
+
+test_that("ob_angle default constructor returns empty", {
+  expect_equal(length(c(ob_angle())), 0)
+})
+
+test_that("ob_angle .data constructor takes turns", {
+  expect_equal(ob_angle(0.5)@degree, 180)
+  expect_equal(ob_angle(0.25)@radian, pi / 2)
+})
+
+test_that("as.character with type argument converts units", {
+  expect_identical(as.character(degree(90), type = "radian"), "0.5\u03C0")
+  expect_identical(as.character(degree(90), type = "turn"), ".25")
+  expect_identical(as.character(turn(0.5), type = "degree"), "180\u00B0")
+  expect_identical(as.character(radian()), character(0))
+})
+
+test_that("trig at specific values", {
+  expect_equal(sin(degree(30)), 0.5)
+  expect_equal(cos(degree(60)), 0.5)
+  expect_equal(tan(degree(45)), 1)
+})
+
+test_that("!= operator", {
+  expect_true(degree(90) != degree(45))
+  expect_false(degree(90) != degree(90))
+  bind(degree(0))
+})
+
+test_that("str and print no error", {
+  expect_no_error(capture.output(str(degree(45))))
+  expect_no_error(capture.output(str(radian(pi))))
+  expect_no_error(capture.output(str(turn(0.5))))
+  expect_no_error(capture.output(print(degree(45))))
+})
+
+test_that("bind angles", {
+  expect_true(S7::S7_inherits(bind(list(turn(0), degree(60))), turn), TRUE)
+  expect_true(S7::S7_inherits(bind(list(radian(0), degree(60))), radian), TRUE)
+  expect_true(S7::S7_inherits(bind(list(degree(0), radian(60))), degree), TRUE)
+  length(radian())
+  bind(list(radian()))
+  unlist(list(radian()))
+  radian(numeric(0) * pi * 2)
+  expect_true(S7::S7_inherits(bind(list(degree(0), radian(60))), degree), TRUE)
+
+})

@@ -6,14 +6,14 @@
 #' @param width width (specify width or height but not both)
 #' @param height height (specify width or height but not both)
 #' @param hjust horizontal adjustment. 0 means left justified, 1 means right justified, 0.5 means centered
-#' @slot rectangle gets or sets rectangle that contains the image
+#' @prop rectangle gets or sets rectangle that contains the image
 #' @param aspect_ratio alters the aspect ratio of the image
 #' @param color set color of equation text
 #' @param fill set color of background rectangle
 #' @param density image quality (dots per inch)
 #' @param latex_packages load latex packages
 #' @param preamble additional latex commands to load in preamble
-#' @slot image raster bitmap
+#' @prop image raster bitmap
 #' @param border border space (in points) around image
 #' @param family font family (installed on system) of plain text
 #' @param math_mode include dollar signs automatically. Set to `FALSE` when the latex command is not in math mode
@@ -36,23 +36,34 @@ ob_latex <- S7::new_class(
     angle = ob_angle_or_character,
     rectangle = S7::new_property(
       getter = function(self) {
-        cc <- rotate(ob_point((self@hjust - .5) * -1 * self@width,
-                              (self@vjust - .5) * -1 * self@height),
-                     self@angle) + self@center
-        ob_rectangle(cc,
-                     width = self@width,
-                     height = self@height,
-                     angle = self@angle)
-    }, setter = function(self, value) {
-      if (!S7::S7_inherits(value, ob_rectangle)) {
-        stop("The `rectangle` must be the output of the function `ob_rectangle`.")
+        cc <- rotate(
+          ob_point(
+            (self@hjust - .5) * -1 * self@width,
+            (self@vjust - .5) * -1 * self@height
+          ),
+          self@angle
+        ) +
+          self@center
+        ob_rectangle(
+          cc,
+          width = self@width,
+          height = self@height,
+          angle = self@angle
+        )
+      },
+      setter = function(self, value) {
+        if (!S7::S7_inherits(value, ob_rectangle)) {
+          stop(
+            "The `rectangle` must be the output of the function `ob_rectangle`."
+          )
         }
-      self@center <- value@center
-      self@width <- value@width
-      self@height <- value@height
-      self@angle <- value@angle
-      self
-    }),
+        self@center <- value@center
+        self@width <- value@width
+        self@height <- value@height
+        self@angle <- value@angle
+        self
+      }
+    ),
     aspect_ratio = S7::new_property(S7::class_numeric, default = 1),
     border = S7::class_numeric,
     family = S7::class_character,
@@ -63,13 +74,17 @@ ob_latex <- S7::new_class(
     density = S7::new_property(S7::class_numeric, default = 300),
     latex_packages = S7::class_character,
     preamble = S7::class_character,
-    force_recompile = S7::new_property(class = S7::class_logical, default = TRUE),
+    force_recompile = S7::new_property(
+      class = S7::class_logical,
+      default = TRUE
+    ),
     delete_files = S7::new_property(S7::class_logical, default = TRUE),
     image = S7::class_list,
-    place = pr_place),
+    place = pr_place
+  ),
   constructor = function(
     tex = character(0),
-    center = ob_point(0,0),
+    center = ob_point(0, 0),
     width = numeric(0),
     height = numeric(0),
     hjust = .5,
@@ -87,9 +102,11 @@ ob_latex <- S7::new_class(
     preamble = character(0),
     force_recompile = TRUE,
     delete_files = TRUE,
-    id = character(0)) {
-
-    if (!S7::S7_inherits(angle, ob_angle)) angle <- degree(angle)
+    id = character(0)
+  ) {
+    if (!S7::S7_inherits(angle, ob_angle)) {
+      angle <- degree(angle)
+    }
 
     # Make color in latex
     latex_color <- ""
@@ -100,10 +117,7 @@ ob_latex <- S7::new_class(
     # Add latex packages
     lp <- ""
     if (length(latex_packages)) {
-      lp <- paste0("\\usepackage{",
-                   latex_packages,
-                   "}\n",
-                   collapse = "")
+      lp <- paste0("\\usepackage{", latex_packages, "}\n", collapse = "")
     }
 
     fill_tex <- ""
@@ -114,9 +128,11 @@ ob_latex <- S7::new_class(
         latex_fill <- c(class_color(fill))
       }
 
-      mybackground <- paste0("\n\\definecolor{mybackground}{HTML}{",
-                             substr(latex_fill, start = 2, stop = 7),
-                             "}\n")
+      mybackground <- paste0(
+        "\n\\definecolor{mybackground}{HTML}{",
+        substr(latex_fill, start = 2, stop = 7),
+        "}\n"
+      )
 
       fill_tex <- paste0(
         mybackground,
@@ -124,14 +140,19 @@ ob_latex <- S7::new_class(
 \savebox\pagecolorbox{%
   \makebox[0pt]{\raisebox{-\paperheight}[0pt][0pt]{%
     \textcolor{mybackground}{\rule{2\paperwidth}{\paperheight}}}}}
-\AtBeginDvi{\box\pagecolorbox})")
+\AtBeginDvi{\box\pagecolorbox})"
+      )
     }
 
     fill_tex[is.na(fill)] <- ""
 
     txt_border <- "border=1pt"
     if (length(border) > 1) {
-      txt_border <- paste0("border={",paste0(border, "pt", collapse = " "),"}")
+      txt_border <- paste0(
+        "border={",
+        paste0(border, "pt", collapse = " "),
+        "}"
+      )
     }
 
     txt_family <- "Arial"
@@ -143,7 +164,9 @@ ob_latex <- S7::new_class(
       "\\documentclass[",
       txt_border,
       "]{standalone}\n\\usepackage{amsmath}\n\\usepackage{xcolor}\n",
-      "\\usepackage{fontspec}\n\\setmainfont{", txt_family, "}\n",
+      "\\usepackage{fontspec}\n\\setmainfont{",
+      txt_family,
+      "}\n",
       lp,
       "\n",
       preamble,
@@ -158,29 +181,41 @@ ob_latex <- S7::new_class(
     )
 
     if (length(filename) == 0) {
-      filename <- janitor::make_clean_names(tex)
+      filename <- janitor::make_clean_names(tex) # nocov
     }
 
     filename <- basename(filename)
 
     by_wh <- ifelse(length(width) > 0 || length(height) == 0, "width", "height")
 
-    img_size <- ifelse(by_wh == "width",
-                       ifelse(length(width) > 0, width, 1),
-                       height)
+    img_size <- ifelse(
+      by_wh == "width",
+      ifelse(length(width) > 0, width, 1),
+      height
+    )
 
-    d <- tibble::tibble(tx = txt, fn = filename, imgsz = img_size, center = unbind(center), theta = angle@degree, hj = hjust, vj = vjust)
+    d <- tibble::tibble(
+      tx = txt,
+      fn = filename,
+      imgsz = img_size,
+      center = unbind(center),
+      theta = angle@degree,
+      hj = hjust,
+      vj = vjust
+    )
     n <- nrow(d)
 
     image <- purrr::pmap_df(d, \(tx, fn, imgsz, center, theta, hj, vj) {
       f_pdf <- paste0(fn, ".pdf")
       f_tex <- paste0(fn, ".tex")
+      f_aux <- paste0(fn, ".aux")
+      f_log <- paste0(fn, ".log")
       if (force_recompile || !file.exists(f_pdf)) {
         cat(tx, file = f_tex)
         if (tinytex::is_tinytex()) {
-          try(tinytex::xelatex(f_tex))
+          try(tinytex::xelatex(f_tex)) # nocov
         } else {
-          try(shell(paste0("xelatex ", f_tex)))
+          try(system2(paste0("xelatex ", f_tex))) # nocov
         }
       }
 
@@ -197,10 +232,20 @@ ob_latex <- S7::new_class(
       i <- magick::image_raster(i, tidy = FALSE)
 
       if (delete_files) {
-        file.remove(f_pdf)
-        file.remove(f_tex)
-      }
+        if (file.exists(f_pdf)) {
+          file.remove(f_pdf)
+        }
+        if (file.exists(f_tex)) {
+          file.remove(f_tex)
+        }
+        if (file.exists(f_log)) {
+          file.remove(f_log)
+        }
+        if (file.exists(f_aux)) {
+          file.remove(f_aux)
+        }
 
+      }
 
       tibble::tibble(
         image = list(i),
@@ -210,9 +255,7 @@ ob_latex <- S7::new_class(
         hjust = hj,
         vjust = vj
       )
-
     })
-
 
     S7::new_object(
       S7::S7_object(),
@@ -238,62 +281,82 @@ ob_latex <- S7::new_class(
       math_mode = math_mode,
       id = id
     )
-
-  })
-
+  }
+)
 
 
 S7::method(as.geom, ob_latex) <- function(x, ...) {
+  purrr::pmap(
+    list(
+      x@image,
+      x@width,
+      x@height,
+      unbind(x@center),
+      unbind(x@angle),
+      x@hjust,
+      x@vjust,
+      x@fill
+    ),
+    \(i, width, height, center, angle, hjust, vjust, fill) {
+      cc <- rotate(
+        ob_point((hjust - .5) * -1 * width, (vjust - .5) * -1 * height),
+        angle
+      ) +
+        center
 
-  purrr::pmap(list(x@image, x@width, x@height, unbind(x@center), unbind(x@angle), x@hjust, x@vjust, x@fill), \(i,width, height, center, angle, hjust, vjust, fill) {
+      bb <- ob_rectangle(
+        cc,
+        width = width,
+        height = height,
+        angle = angle
+      )@bounding_box
 
-    cc <- rotate(ob_point((hjust - .5) * -1 * width,
-                          (vjust - .5) * -1 * height),
-                 angle) + center
+      if (round(angle@degree, 10) != 0) {
+        i <- magick::image_read(i) |>
+          magick::image_background("#FFFFFF00") |>
+          magick::image_rotate(-angle@degree) |>
+          magick::image_raster(tidy = FALSE)
+      }
 
-
-      bb <- ob_rectangle(cc,
-                         width = width,
-                         height = height,
-                         angle = angle)@bounding_box
-
-      if (round(angle@degree,10) != 0) {
-      i <- magick::image_read(i) |>
-        magick::image_background("#FFFFFF00") |>
-        magick::image_rotate(-angle@degree) |>
-        magick::image_raster(tidy = FALSE)
+      ggplot2::annotation_raster(
+        i,
+        interpolate = TRUE,
+        xmin = bb@west@x,
+        xmax = bb@east@x,
+        ymin = bb@south@y,
+        ymax = bb@north@y
+      )
     }
-
-    ggplot2::annotation_raster(
-      i,
-      interpolate = TRUE,
-      xmin = bb@west@x,
-      xmax = bb@east@x,
-      ymin = bb@south@y,
-      ymax = bb@north@y
-    )
-
-    })
-
+  )
 }
 
 S7::method(`+`, list(class_gg, ob_latex)) <- function(e1, e2) {
-  e1 + as.geom(e2)
+  e1 + as.geom(e2) # nocov
 }
 
 
 S7::method(update_ggplot, list(ob_latex, class_ggplot)) <-
   function(object, plot, ...) {
-    plot + as.geom(object)
+    plot + as.geom(object) # nocov
   }
 
-S7::method(place, list(ob_latex, centerpoint)) <- function(x, from, where = "right", sep = 1) {
+S7::method(place, list(ob_latex, centerpoint)) <- function(
+  x,
+  from,
+  where = "right",
+  sep = 1
+) {
   r1 <- x@rectangle
   x@rectangle <- place(r1, from, where, sep)
   x
 }
 
- S7::method(place, list(ob_latex, ob_point)) <- function(x, from, where = "right", sep = 1) {
+S7::method(place, list(ob_latex, ob_point)) <- function(
+  x,
+  from,
+  where = "right",
+  sep = 1
+) {
   r1 <- x@rectangle
   x@rectangle <- place(r1, from, where, sep)
   x

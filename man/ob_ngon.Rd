@@ -32,13 +32,13 @@ ob_ngon(
 
 \item{radius}{Distance from center to a vertex}
 
-\item{angle}{description}
+\item{angle}{Angle of rotation for ngon}
 
 \item{label}{A character, angle, or label object}
 
-\item{side_length}{Distance of each side}
+\item{side_length}{Distance of each side (can be used instead of radius to set size of ngon)}
 
-\item{apothem}{Distance from center to a side's midpoint}
+\item{apothem}{Distance from center to a side's midpoint (can be used instead of the radius to set size of ngon)}
 
 \item{vertex_radius}{A numeric or unit vector of length one, specifying the corner radius}
 
@@ -54,9 +54,9 @@ ob_ngon(
 
 \item{style}{Gets and sets the styles associated with \code{\link{ob_ngon}}}
 
-\item{x}{overrides x-coordinate in \code{center@x}}
+\item{x}{x-coordinate of center point. If specified, overrides x-coordinate of \verb{@center}.}
 
-\item{y}{overrides y-coordinate in \code{center@y}}
+\item{y}{x-coordinate of center point. If specified, overrides y-coordinate of \verb{@center}.}
 
 \item{id}{character string to identify object}
 
@@ -68,25 +68,54 @@ ob_ngon(
 \description{
 An ngon is a regular polygon, meaning that each side is of equal length. The \code{\link{ob_ngon}} object can be specified with a center, n (number of sides), radius, and angle. Instead of specifying a radius, one can specify either the \code{side_length} or the length of the \code{apothem} (i.e., the distance from the center to a side's midpoint.
 }
-\section{Slots}{
+\examples{
+ob_ngon(center = ob_point(x = 3:8, y = 0),
+        n = 3:8,
+        radius = .4)
+}
+\section{Additional properties}{
 
 \describe{
-\item{\code{area}}{The area of the ngons in the \code{\link{ob_ngon}} object}
+\item{\code{@aesthetics}}{A list of information about the object's aesthetic properties}
 
-\item{\code{length}}{The number of ngons in the \code{\link{ob_ngon}} object}
+\item{\code{@area}}{The area of the ngons in the \code{\link{ob_ngon}} object}
 
-\item{\code{normal_at}}{A function that finds a point that is perpendicular from the ngon and at a specified distance}
+\item{\code{@bounding_box}}{a rectangle that contains all the ngons}
 
-\item{\code{perimeter}}{The length of all the side segments}
+\item{\code{@circumscribed}}{Returns the circle that circumscribes the ngon.}
 
-\item{\code{point_at}}{A function that finds a point on the ngon at the specified angle.}
+\item{\code{@inscribed}}{Returns the circle that inscribes the ngon.}
 
-\item{\code{segments}}{side segments of the regular polygon}
+\item{\code{@length}}{The number of ngons in the \code{\link{ob_ngon}} object}
 
-\item{\code{tangent_at}}{A function that finds the tangent line at the specified angle.}
+\item{\code{@normal_at}}{A function that finds a point that is perpendicular from the ngon and at a specified distance}
 
-\item{\code{tibble}}{Gets a tibble (data.frame) containing parameters and styles used by \code{ggforce::geom_shape}.}
+\item{\code{@perimeter}}{The length of the sum of all the side segments}
 
-\item{\code{vertices}}{points on the regular polygon}
+\item{\code{@point_at}}{A function that finds a point on the ngon at the specified angle.}
+
+\item{\code{@segments}}{side segments of the regular polygon}
+
+\item{\code{@tangent_at}}{A function that finds the tangent line at the specified angle.}
+
+\item{\code{@tibble}}{Gets a tibble (data.frame) containing parameters and styles used by \code{ggforce::geom_shape}.}
+
+\item{\code{@vertices}}{points on the regular polygon}
+
+\item{\code{@east}}{right point (\code{\link{ob_point}})}
+
+\item{\code{@north}}{top point (\code{\link{ob_point}})}
+
+\item{\code{@west}}{left point (\code{\link{ob_point}})}
+
+\item{\code{@south}}{top point (\code{\link{ob_point}})}
+
+\item{\code{@northeast}}{upper right point (\code{\link{ob_point}})}
+
+\item{\code{@northwest}}{upper left point (\code{\link{ob_point}})}
+
+\item{\code{@southwest}}{lower left point (\code{\link{ob_point}})}
+
+\item{\code{@southeast}}{lower right point (\code{\link{ob_point}})}
 }}
 

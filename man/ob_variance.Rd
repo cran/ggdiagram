@@ -2,7 +2,7 @@
 % Please edit documentation in R/a_early.R, R/ellipses.R
 \name{ob_variance}
 \alias{ob_variance}
-\title{create double-headed arrow paths indicating variance}
+\title{Variance object}
 \usage{
 ob_variance(
   x,
@@ -11,12 +11,26 @@ ob_variance(
   bend = 0,
   looseness = 1,
   arrow_head = the$arrow_head,
+  arrow_fins = the$arrow_head,
+  resect = 2,
+  ...
+)
+
+## S7 method for class <ggdiagram::centerpoint>
+ob_variance(
+  x,
+  where = "north",
+  theta = 50,
+  bend = 0,
+  looseness = 1,
+  arrow_head = the$arrow_head,
+  arrow_fins = the$arrow_head,
   resect = 2,
   ...
 )
 }
 \arguments{
-\item{x}{object}
+\item{x}{object of type \code{ggdiagram::centerpoint}}
 
 \item{where}{Location on object. Can be numeric (degrees), \link{degree}, \link{radian}, \link{turn}, or named direction (e.g., "northwest", "east", "below", "left")}
 
@@ -28,6 +42,8 @@ ob_variance(
 
 \item{arrow_head}{A 2-column matrix of polygon points}
 
+\item{arrow_fins}{A 2-column matrix of polygon points}
+
 \item{resect}{A numeric(1) denoting millimeters or \link[grid:unit]{grid::unit} to shorten the arrow head and fins.}
 
 \item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> properties passed to style}
@@ -36,12 +52,21 @@ ob_variance(
 Returns an object of type \code{\link{ob_bezier}}
 }
 \description{
-create double-headed arrow paths indicating variance
+Creates double-headed arrow paths indicating variance
 }
+\section{Methods}{
+\code{ob_variance} is an S7 generic with methods available for the following classes:
+
+\itemize{
+\item \code{ggdiagram::centerpoint}
+}
+}
+
 \examples{
 theta <- degree(seq(0, 360 - 45, 45))
 ggdiagram() +
 {x <- ob_circle(ob_polar(theta, r = 3))} +
+connect(x, lag_cycle(x, 3), resect = 2) +
 ob_variance(x,
             label = ob_label(LETTERS[seq_along(c(theta))]),
             where = theta,
